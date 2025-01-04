@@ -19,7 +19,7 @@ const Hero = () => {
           transform: `translateY(${scrollY * 0.5}px)`,
         }}
       >
-        <div className="absolute inset-0 bg-purple-dark/40" />
+        <div className="absolute inset-0 bg-purple-dark/40 dark:bg-purple-dark/60" />
       </div>
       
       <div className="relative container mx-auto px-4 h-full flex items-center">
