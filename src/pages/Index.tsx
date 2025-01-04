@@ -46,9 +46,9 @@ const Index = () => {
       <Navigation />
       <Hero />
       
-      <section id="services" className="py-20">
+      <section id="services" className="py-20 bg-gradient-to-b from-purple-secondary/5 to-transparent dark:from-purple-dark/20 dark:to-transparent">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-bold text-center text-purple-dark mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold text-center text-purple-dark dark:text-purple-secondary mb-12">
             Our Services
           </h2>
           <div className="grid md:grid-cols-3 gap-8">
