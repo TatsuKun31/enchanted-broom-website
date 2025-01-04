@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 interface ServiceCardProps {
   title: string;
@@ -8,6 +9,12 @@ interface ServiceCardProps {
 }
 
 const ServiceCard = ({ title, description, price, features }: ServiceCardProps) => {
+  const navigate = useNavigate();
+
+  const handleSelectPlan = () => {
+    navigate("/auth");
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -38,7 +45,10 @@ const ServiceCard = ({ title, description, price, features }: ServiceCardProps) 
           </li>
         ))}
       </ul>
-      <button className="w-full mt-6 bg-purple-primary hover:bg-purple-primary/90 text-white py-2 rounded-lg transition-colors">
+      <button 
+        onClick={handleSelectPlan}
+        className="w-full mt-6 bg-purple-primary hover:bg-purple-primary/90 text-white py-2 rounded-lg transition-colors"
+      >
         Select Plan
       </button>
     </motion.div>
