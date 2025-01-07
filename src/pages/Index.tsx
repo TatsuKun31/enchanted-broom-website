@@ -2,9 +2,19 @@ import Navigation from "@/components/Navigation";
 import Hero from "@/components/Hero";
 import ServiceCard from "@/components/ServiceCard";
 import WhyChooseUs from "@/components/WhyChooseUs";
-import ContactForm from "@/components/ContactForm";
+import { useEffect, useState } from "react";
 
 const Index = () => {
+  const [scrollY, setScrollY] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   const services = [
     {
       title: "Basic Clean",
@@ -42,11 +52,29 @@ const Index = () => {
   ];
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen relative">
+      <div
+        className="fixed inset-0 bg-[url('https://images.unsplash.com/photo-1527515545081-5db817172677?q=80&w=1470&h=2940')] bg-cover bg-center bg-no-repeat"
+        style={{
+          transform: `translateY(${scrollY * 0.5}px)`,
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: -1,
+          height: '100%',
+          backgroundAttachment: 'fixed',
+          backgroundSize: 'cover',
+        }}
+      >
+        <div className="absolute inset-0 bg-purple-dark/60" />
+      </div>
+
       <Navigation />
       <Hero />
       
-      <section id="services" className="py-20 bg-gradient-to-b from-purple-secondary/5 to-transparent dark:from-purple-dark/20 dark:to-transparent">
+      <section id="services" className="relative py-20 bg-gradient-to-b from-purple-secondary/5 to-transparent dark:from-purple-dark/20 dark:to-transparent">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl md:text-4xl font-bold text-center text-purple-dark dark:text-purple-secondary mb-12">
             Our Services
@@ -60,7 +88,6 @@ const Index = () => {
       </section>
 
       <WhyChooseUs />
-      <ContactForm />
     </div>
   );
 };
