@@ -54,15 +54,18 @@ const Index = () => {
   return (
     <div className="min-h-screen relative">
       <div
-        className="fixed inset-0 bg-[url('https://images.unsplash.com/photo-1721322800607-8c38375eef04')] bg-cover bg-center bg-no-repeat bg-fixed"
+        className="fixed inset-0 bg-[url('https://images.unsplash.com/photo-1721322800607-8c38375eef04')] bg-cover bg-center bg-no-repeat"
         style={{
           transform: `translateY(${scrollY * 0.5}px)`,
-          minHeight: '200vh',
-          width: '100%',
           position: 'fixed',
           top: 0,
           left: 0,
+          right: 0,
+          bottom: 0,
           zIndex: -1,
+          height: '100%',
+          backgroundAttachment: 'fixed',
+          backgroundSize: 'cover',
         }}
       >
         <div className="absolute inset-0 bg-purple-dark/60" />
