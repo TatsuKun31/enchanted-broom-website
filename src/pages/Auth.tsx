@@ -1,24 +1,34 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const Auth = () => {
+  const navigate = useNavigate();
+
   const handleGoogleSignIn = () => {
     // TODO: Implement Google Sign In
     console.log("Google Sign In clicked");
+    toast.error("Google Sign In not implemented yet");
+  };
+
+  const handleBypass = () => {
+    toast.success("Bypassing authentication for testing");
+    navigate("/room-details");
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-purple-50">
+    <div className="min-h-screen flex items-center justify-center bg-purple-50 dark:bg-purple-dark/20">
       <Card className="w-[90%] max-w-md">
         <CardHeader>
-          <CardTitle className="text-2xl text-center text-purple-dark">
+          <CardTitle className="text-2xl text-center text-purple-dark dark:text-purple-secondary">
             Sign in to Continue
           </CardTitle>
           <CardDescription className="text-center">
             Please sign in with your Google account to proceed with booking
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex justify-center">
+        <CardContent className="flex flex-col gap-4">
           <Button
             onClick={handleGoogleSignIn}
             className="bg-white hover:bg-gray-50 text-gray-900 border border-gray-300"
@@ -47,6 +57,14 @@ const Auth = () => {
               />
             </svg>
             Sign in with Google
+          </Button>
+          
+          <Button
+            onClick={handleBypass}
+            variant="outline"
+            className="bg-purple-primary/10 hover:bg-purple-primary/20 text-purple-primary border-purple-primary/20"
+          >
+            Bypass Auth (Testing Only)
           </Button>
         </CardContent>
       </Card>
