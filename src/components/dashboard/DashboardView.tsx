@@ -1,6 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, Clock, Home, Settings } from "lucide-react";
+import { useState } from "react";
+import Samantha from "../Samantha";
 
 interface DashboardViewProps {
   userData: {
@@ -12,8 +14,19 @@ interface DashboardViewProps {
 }
 
 export const DashboardView = ({ userData }: DashboardViewProps) => {
+  const [showTutorial, setShowTutorial] = useState(true);
+
   return (
     <div className="space-y-8 p-8 animate-fade-up">
+      {showTutorial && (
+        <div className="mb-8">
+          <Samantha 
+            message={`Welcome to your dashboard, ${userData.name}! Here you can view your upcoming services, billing information, and manage your preferences. Let me show you around!`}
+            position="right"
+          />
+        </div>
+      )}
+      
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Welcome back, {userData.name}</h1>
       </div>
