@@ -1,8 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, Clock, Home, Settings } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import Samantha from "../Samantha";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 interface DashboardViewProps {
   userData: {
@@ -15,6 +19,29 @@ interface DashboardViewProps {
 
 export const DashboardView = ({ userData }: DashboardViewProps) => {
   const [showTutorial, setShowTutorial] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate("/auth");
+      }
+    };
+
+    checkAuth();
+  }, [navigate]);
+
+  const handleSignOut = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      navigate("/auth");
+    } catch (error) {
+      toast.error("Error signing out");
+      console.error("Error:", error);
+    }
+  };
 
   return (
     <div className="space-y-8 p-8 animate-fade-up">
@@ -29,6 +56,7 @@ export const DashboardView = ({ userData }: DashboardViewProps) => {
       
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Welcome back, {userData.name}</h1>
+        <Button variant="outline" onClick={handleSignOut}>Sign Out</Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

@@ -2,7 +2,9 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import Samantha from "../Samantha";
+import { toast } from "sonner";
 
 interface ServicePreferencesStepProps {
   onNext: (data: { frequency: string; timePreference: string }) => void;
@@ -12,10 +14,37 @@ interface ServicePreferencesStepProps {
 export const ServicePreferencesStep = ({ onNext, onBack }: ServicePreferencesStepProps) => {
   const [frequency, setFrequency] = useState("");
   const [timePreference, setTimePreference] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onNext({ frequency, timePreference });
+    setIsLoading(true);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error("No authenticated user found");
+        return;
+      }
+
+      const { error } = await supabase
+        .from('service_preferences')
+        .insert({
+          user_id: user.id,
+          frequency,
+          time_preference: timePreference
+        });
+
+      if (error) throw error;
+
+      onNext({ frequency, timePreference });
+    } catch (error) {
+      toast.error("Failed to save service preferences");
+      console.error("Error saving service preferences:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -55,8 +84,8 @@ export const ServicePreferencesStep = ({ onNext, onBack }: ServicePreferencesSte
           <Button type="button" variant="outline" onClick={onBack} className="flex-1">
             Back
           </Button>
-          <Button type="submit" className="flex-1">
-            Complete Setup
+          <Button type="submit" className="flex-1" disabled={isLoading}>
+            {isLoading ? "Saving..." : "Complete Setup"}
           </Button>
         </div>
       </form>

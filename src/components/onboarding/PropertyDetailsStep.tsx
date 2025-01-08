@@ -3,7 +3,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import Samantha from "../Samantha";
+import { toast } from "sonner";
 
 interface PropertyDetailsStepProps {
   onNext: (data: { propertyType: string; address: string }) => void;
@@ -13,10 +15,37 @@ interface PropertyDetailsStepProps {
 export const PropertyDetailsStep = ({ onNext, onBack }: PropertyDetailsStepProps) => {
   const [propertyType, setPropertyType] = useState("house");
   const [address, setAddress] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onNext({ propertyType, address });
+    setIsLoading(true);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error("No authenticated user found");
+        return;
+      }
+
+      const { error } = await supabase
+        .from('properties')
+        .insert({
+          user_id: user.id,
+          property_type: propertyType,
+          address
+        });
+
+      if (error) throw error;
+
+      onNext({ propertyType, address });
+    } catch (error) {
+      toast.error("Failed to save property details");
+      console.error("Error saving property details:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -57,8 +86,8 @@ export const PropertyDetailsStep = ({ onNext, onBack }: PropertyDetailsStepProps
           <Button type="button" variant="outline" onClick={onBack} className="flex-1">
             Back
           </Button>
-          <Button type="submit" className="flex-1">
-            Continue
+          <Button type="submit" className="flex-1" disabled={isLoading}>
+            {isLoading ? "Saving..." : "Continue"}
           </Button>
         </div>
       </form>

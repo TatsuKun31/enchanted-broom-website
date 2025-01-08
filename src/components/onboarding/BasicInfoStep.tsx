@@ -2,7 +2,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import Samantha from "../Samantha";
+import { toast } from "sonner";
 
 interface BasicInfoStepProps {
   onNext: (data: { name: string; phone: string }) => void;
@@ -11,10 +13,34 @@ interface BasicInfoStepProps {
 export const BasicInfoStep = ({ onNext }: BasicInfoStepProps) => {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onNext({ name, phone });
+    setIsLoading(true);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error("No authenticated user found");
+        return;
+      }
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({ name, phone })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      onNext({ name, phone });
+    } catch (error) {
+      toast.error("Failed to save basic information");
+      console.error("Error saving basic info:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -45,7 +71,9 @@ export const BasicInfoStep = ({ onNext }: BasicInfoStepProps) => {
             required
           />
         </div>
-        <Button type="submit" className="w-full">Continue</Button>
+        <Button type="submit" className="w-full" disabled={isLoading}>
+          {isLoading ? "Saving..." : "Continue"}
+        </Button>
       </form>
     </div>
   );
