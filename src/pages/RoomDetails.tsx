@@ -1,72 +1,85 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
+import { BasicInfoStep } from "@/components/onboarding/BasicInfoStep";
+import { PropertyDetailsStep } from "@/components/onboarding/PropertyDetailsStep";
+import { ServicePreferencesStep } from "@/components/onboarding/ServicePreferencesStep";
+import { DashboardView } from "@/components/dashboard/DashboardView";
+
+type OnboardingStep = "basic-info" | "property-details" | "service-preferences" | "completed";
 
 const RoomDetails = () => {
-  const [rooms, setRooms] = useState({
-    fullBath: 0,
-    halfBath: 0,
-    primaryBedroom: 0,
-    additionalBedrooms: 0,
-    livingRoom: 0,
-    diningRoom: 0,
+  const [currentStep, setCurrentStep] = useState<OnboardingStep>("basic-info");
+  const [userData, setUserData] = useState({
+    name: "",
+    phone: "",
+    propertyType: "",
+    address: "",
+    frequency: "",
+    timePreference: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Room details submitted:", rooms);
+  const handleBasicInfoNext = (data: { name: string; phone: string }) => {
+    setUserData((prev) => ({ ...prev, ...data }));
+    setCurrentStep("property-details");
+  };
+
+  const handlePropertyDetailsNext = (data: { propertyType: string; address: string }) => {
+    setUserData((prev) => ({ ...prev, ...data }));
+    setCurrentStep("service-preferences");
+  };
+
+  const handleServicePreferencesNext = (data: { frequency: string; timePreference: string }) => {
+    setUserData((prev) => ({ ...prev, ...data }));
+    setCurrentStep("completed");
+  };
+
+  const renderStep = () => {
+    switch (currentStep) {
+      case "basic-info":
+        return <BasicInfoStep onNext={handleBasicInfoNext} />;
+      case "property-details":
+        return (
+          <PropertyDetailsStep
+            onNext={handlePropertyDetailsNext}
+            onBack={() => setCurrentStep("basic-info")}
+          />
+        );
+      case "service-preferences":
+        return (
+          <ServicePreferencesStep
+            onNext={handleServicePreferencesNext}
+            onBack={() => setCurrentStep("property-details")}
+          />
+        );
+      case "completed":
+        return <DashboardView userData={userData} />;
+      default:
+        return null;
+    }
   };
 
   return (
-    <div className="min-h-screen bg-purple-50 py-12 px-4">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="max-w-2xl mx-auto"
-      >
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl text-center text-purple-dark">
-              Tell us about your space
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {Object.entries(rooms).map(([key, value]) => (
-                  <div key={key} className="space-y-2">
-                    <Label htmlFor={key} className="capitalize">
-                      {key.replace(/([A-Z])/g, " $1").trim()}
-                    </Label>
-                    <Input
-                      id={key}
-                      type="number"
-                      min="0"
-                      value={value}
-                      onChange={(e) =>
-                        setRooms((prev) => ({
-                          ...prev,
-                          [key]: parseInt(e.target.value) || 0,
-                        }))
-                      }
-                    />
-                  </div>
-                ))}
-              </div>
-              <Button
-                type="submit"
-                className="w-full bg-purple-primary hover:bg-purple-primary/90"
-              >
-                Continue
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </motion.div>
+    <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white">
+      {currentStep !== "completed" ? (
+        <div className="max-w-md mx-auto pt-12 px-4">
+          <div className="space-y-6">
+            <div className="text-center space-y-2">
+              <h1 className="text-2xl font-bold text-purple-primary">
+                {currentStep === "basic-info"
+                  ? "Welcome! Let's get started"
+                  : currentStep === "property-details"
+                  ? "Tell us about your property"
+                  : "Almost done!"}
+              </h1>
+              <p className="text-muted-foreground">
+                Step {currentStep === "basic-info" ? "1" : currentStep === "property-details" ? "2" : "3"} of 3
+              </p>
+            </div>
+            {renderStep()}
+          </div>
+        </div>
+      ) : (
+        renderStep()
+      )}
     </div>
   );
 };
