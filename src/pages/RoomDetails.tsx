@@ -1,4 +1,5 @@
 import { useState } from "react";
+import Navigation from "@/components/Navigation";
 import { BasicInfoStep } from "@/components/onboarding/BasicInfoStep";
 import { PropertyDetailsStep } from "@/components/onboarding/PropertyDetailsStep";
 import { ServicePreferencesStep } from "@/components/onboarding/ServicePreferencesStep";
@@ -58,10 +59,11 @@ const RoomDetails = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white dark:from-purple-dark/20 dark:to-purple-dark/40">
+      <Navigation />
       {currentStep !== "completed" ? (
-        <div className="max-w-md mx-auto pt-12 px-4">
-          <div className="space-y-6">
+        <div className="max-w-md mx-auto pt-24 px-4">
+          <div className="bg-white dark:bg-purple-dark/40 rounded-lg shadow-lg p-8 space-y-6 border border-purple-secondary/20">
             <div className="text-center space-y-2">
               <h1 className="text-2xl font-bold text-purple-primary">
                 {currentStep === "basic-info"
