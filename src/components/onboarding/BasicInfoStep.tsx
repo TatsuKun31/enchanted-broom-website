@@ -30,7 +30,9 @@ export const BasicInfoStep = ({ onNext }: BasicInfoStepProps) => {
       const { error } = await supabase
         .from('profiles')
         .update({ name, phone })
-        .eq('id', user.id);
+        .eq('id', user.id)
+        .select()
+        .single();
 
       if (error) throw error;
 

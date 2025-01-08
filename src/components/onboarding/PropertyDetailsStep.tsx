@@ -35,7 +35,9 @@ export const PropertyDetailsStep = ({ onNext, onBack }: PropertyDetailsStepProps
           user_id: user.id,
           property_type: propertyType,
           address
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
 

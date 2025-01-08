@@ -9,7 +9,91 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          created_at: string
+          id: string
+          name: string | null
+          phone: string | null
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          name?: string | null
+          phone?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string | null
+          phone?: string | null
+        }
+        Relationships: []
+      }
+      properties: {
+        Row: {
+          address: string
+          created_at: string
+          id: string
+          property_type: string
+          user_id: string | null
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          id?: string
+          property_type: string
+          user_id?: string | null
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          id?: string
+          property_type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "properties_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_preferences: {
+        Row: {
+          created_at: string
+          frequency: string
+          id: string
+          time_preference: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          frequency: string
+          id?: string
+          time_preference: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          frequency?: string
+          id?: string
+          time_preference?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

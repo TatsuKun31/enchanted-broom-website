@@ -34,7 +34,9 @@ export const ServicePreferencesStep = ({ onNext, onBack }: ServicePreferencesSte
           user_id: user.id,
           frequency,
           time_preference: timePreference
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
 
