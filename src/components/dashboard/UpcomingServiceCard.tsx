@@ -57,7 +57,7 @@ export const UpcomingServiceCard = ({ booking }: UpcomingServiceCardProps) => {
       if (roomsQueryError) throw roomsQueryError;
 
       if (bookingRooms) {
-        // Delete all addons for each booking room
+        // Delete all addons for each booking room one by one
         for (const room of bookingRooms) {
           const { error: addonsError } = await supabase
             .from("booking_addons")
@@ -67,30 +67,31 @@ export const UpcomingServiceCard = ({ booking }: UpcomingServiceCardProps) => {
           if (addonsError) throw addonsError;
         }
 
-        // Delete all booking rooms
+        // After all addons are deleted, delete all booking rooms
         const { error: roomsError } = await supabase
           .from("booking_rooms")
           .delete()
           .eq("booking_id", booking.id);
 
         if (roomsError) throw roomsError;
+
+        // Finally, delete the service booking
+        const { error: bookingError } = await supabase
+          .from("service_bookings")
+          .delete()
+          .eq("id", booking.id);
+
+        if (bookingError) throw bookingError;
+
+        toast({
+          title: "Service Cancelled",
+          description: "Your service has been successfully cancelled.",
+        });
+
+        // Invalidate queries to refresh the data
+        queryClient.invalidateQueries({ queryKey: ["nextService"] });
+        queryClient.invalidateQueries({ queryKey: ["upcomingServices"] });
       }
-
-      // Finally, delete the service booking
-      const { error: bookingError } = await supabase
-        .from("service_bookings")
-        .delete()
-        .eq("id", booking.id);
-
-      if (bookingError) throw bookingError;
-
-      toast({
-        title: "Service Cancelled",
-        description: "Your service has been successfully cancelled.",
-      });
-
-      queryClient.invalidateQueries({ queryKey: ["nextService"] });
-      queryClient.invalidateQueries({ queryKey: ["upcomingServices"] });
     } catch (error) {
       console.error("Error cancelling service:", error);
       toast({
