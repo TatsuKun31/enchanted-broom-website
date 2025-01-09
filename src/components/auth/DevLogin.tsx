@@ -8,6 +8,8 @@ import { useState, useEffect } from "react";
 export const DevLogin = () => {
   const navigate = useNavigate();
   const [currentTestNumber, setCurrentTestNumber] = useState(0);
+  const [isSearching, setIsSearching] = useState(false);
+  const [attemptCount, setAttemptCount] = useState(0);
 
   // Load the last used test number from localStorage
   useEffect(() => {
@@ -17,7 +19,7 @@ export const DevLogin = () => {
     }
   }, []);
 
-  const checkUserExists = async (email: string) => {
+  const checkUserExists = async (email: string): Promise<boolean> => {
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email: email,
@@ -25,29 +27,30 @@ export const DevLogin = () => {
       });
 
       // These specific error messages indicate the user exists
-      if (error?.message.includes('Invalid login credentials') || 
-          error?.message.includes('Email not confirmed')) {
-        return true;
-      }
-      
-      return false;
-    } catch (error) {
-      console.error("Error checking user existence:", error);
+      return error?.message.includes('Invalid login credentials') || 
+             error?.message.includes('Email not confirmed');
+    } catch {
+      // Silently fail and assume user doesn't exist
       return false;
     }
   };
 
   const findNextAvailableEmail = async (startNumber: number): Promise<{ email: string; number: number }> => {
     let testNumber = startNumber;
-    let maxAttempts = 100; // Prevent infinite loops
+    let maxAttempts = 100;
     let attempts = 0;
     
     while (attempts < maxAttempts) {
+      setAttemptCount(attempts + 1);
       const testEmail = `test${testNumber}@example.com`;
-      const userExists = await checkUserExists(testEmail);
       
-      if (!userExists) {
-        return { email: testEmail, number: testNumber };
+      try {
+        const userExists = await checkUserExists(testEmail);
+        if (!userExists) {
+          return { email: testEmail, number: testNumber };
+        }
+      } catch {
+        // Silently continue to next attempt
       }
       
       testNumber++;
@@ -59,11 +62,13 @@ export const DevLogin = () => {
 
   const handleDevLogin = async () => {
     try {
+      setIsSearching(true);
+      setAttemptCount(0);
+      
       const nextTestNumber = currentTestNumber + 1;
       const { email: availableEmail, number: finalTestNumber } = await findNextAvailableEmail(nextTestNumber);
       const testPassword = 'testpassword123';
 
-      // Try to sign up with the new available email
       const { error: signUpError } = await supabase.auth.signUp({
         email: availableEmail,
         password: testPassword
@@ -75,18 +80,9 @@ export const DevLogin = () => {
           return;
         }
         
-        if (signUpError.message.includes('user_already_exists')) {
-          // If somehow the user was created between our check and signup,
-          // we'll try again with the next number
-          console.log("User was created between check and signup, retrying...");
-          handleDevLogin();
-          return;
-        }
-        
         throw signUpError;
       }
 
-      // If signup successful, try to sign in immediately
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: availableEmail,
         password: testPassword
@@ -109,6 +105,9 @@ export const DevLogin = () => {
         toast.error("Dev login failed. Please try again.");
       }
       console.error("Dev login error:", error);
+    } finally {
+      setIsSearching(false);
+      setAttemptCount(0);
     }
   };
 
@@ -118,9 +117,16 @@ export const DevLogin = () => {
         onClick={handleDevLogin}
         variant="outline"
         className="w-full"
+        disabled={isSearching}
       >
         Dev Login (New Test Account)
       </Button>
+      
+      {isSearching && (
+        <p className="text-sm text-muted-foreground mt-2 text-center">
+          Finding available email... (Attempt {attemptCount})
+        </p>
+      )}
     </div>
   );
 };
