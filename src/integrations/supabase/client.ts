@@ -1,6 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
-import { toast } from "sonner";
 
 // Using the project URL and anon key from the Supabase project
 const supabaseUrl = 'https://wpjrdzpagwnxksikwrly.supabase.co';
