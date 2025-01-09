@@ -7,71 +7,34 @@ import { useState, useEffect } from "react";
 
 export const DevLogin = () => {
   const navigate = useNavigate();
-  const [currentTestNumber, setCurrentTestNumber] = useState(0);
-  const [isSearching, setIsSearching] = useState(false);
-  const [attemptCount, setAttemptCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [currentNonce, setCurrentNonce] = useState(0);
 
-  // Load the last used test number from localStorage
+  // Load the last used nonce from localStorage
   useEffect(() => {
-    const lastTestNumber = localStorage.getItem('lastTestNumber');
-    if (lastTestNumber) {
-      setCurrentTestNumber(parseInt(lastTestNumber));
+    const lastNonce = localStorage.getItem('lastNonce');
+    if (lastNonce) {
+      setCurrentNonce(parseInt(lastNonce));
     }
   }, []);
 
-  const findNextAvailableEmail = async (startNumber: number): Promise<{ email: string; number: number }> => {
-    let testNumber = startNumber;
-    let maxAttempts = 100; // Prevent infinite loops
-    let attempts = 0;
-
-    while (attempts < maxAttempts) {
-      setAttemptCount(attempts + 1);
-      const testEmail = `test${testNumber}@example.com`;
-      
-      try {
-        const { data: { user }, error } = await supabase.auth.signInWithPassword({
-          email: testEmail,
-          password: 'wrong-password'
-        });
-
-        // If no error or user exists, increment and continue
-        if (!error || user) {
-          testNumber++;
-          attempts++;
-          continue;
-        }
-
-        // If error indicates invalid credentials, the email exists
-        if (error.message.includes('Invalid login credentials')) {
-          testNumber++;
-          attempts++;
-          continue;
-        }
-
-        // If we get here, the email might be available
-        return { email: testEmail, number: testNumber };
-      } catch {
-        // On any error, try the next number
-        testNumber++;
-        attempts++;
-      }
-    }
-    
-    throw new Error("Could not find available email after maximum attempts");
+  const generateTestEmail = (nonce: number): string => {
+    const baseEmail = "newtest@testemail.com";
+    return nonce === 1 ? baseEmail : `newtest${nonce}@testemail.com`;
   };
 
   const handleDevLogin = async () => {
     try {
-      setIsSearching(true);
-      setAttemptCount(0);
+      setIsLoading(true);
       
-      const nextTestNumber = currentTestNumber + 1;
-      const { email: availableEmail, number: finalTestNumber } = await findNextAvailableEmail(nextTestNumber);
+      // Increment nonce for new account
+      const newNonce = currentNonce + 1;
+      const testEmail = generateTestEmail(newNonce);
       const testPassword = 'testpassword123';
 
       // Try to sign up with the email
       const { error: signUpError } = await supabase.auth.signUp({
-        email: availableEmail,
+        email: testEmail,
         password: testPassword
       });
 
@@ -80,21 +43,12 @@ export const DevLogin = () => {
           toast.error("Email authentication is disabled. Please enable it in Supabase settings.");
           return;
         }
-        
-        if (signUpError.message.includes('user_already_exists')) {
-          // If user was created between our check and signup, try the next number
-          localStorage.setItem('lastTestNumber', finalTestNumber.toString());
-          setCurrentTestNumber(finalTestNumber);
-          handleDevLogin(); // Retry with next number
-          return;
-        }
-        
         throw signUpError;
       }
 
       // Try to sign in with the new account
       const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: availableEmail,
+        email: testEmail,
         password: testPassword
       });
 
@@ -102,11 +56,11 @@ export const DevLogin = () => {
         throw signInError;
       }
 
-      // Save the successful test number
-      localStorage.setItem('lastTestNumber', finalTestNumber.toString());
-      setCurrentTestNumber(finalTestNumber);
+      // Save the successful nonce
+      localStorage.setItem('lastNonce', newNonce.toString());
+      setCurrentNonce(newNonce);
       
-      toast.success(`Logged in as ${availableEmail}`);
+      toast.success(`Logged in as ${testEmail}`);
       navigate("/room-details");
     } catch (error) {
       console.error("Dev login error:", error);
@@ -116,8 +70,7 @@ export const DevLogin = () => {
         toast.error("Dev login failed. Please try again.");
       }
     } finally {
-      setIsSearching(false);
-      setAttemptCount(0);
+      setIsLoading(false);
     }
   };
 
@@ -127,14 +80,14 @@ export const DevLogin = () => {
         onClick={handleDevLogin}
         variant="outline"
         className="w-full"
-        disabled={isSearching}
+        disabled={isLoading}
       >
         Dev Login (New Test Account)
       </Button>
       
-      {isSearching && (
+      {isLoading && (
         <p className="text-sm text-muted-foreground mt-2 text-center">
-          Finding available email... (Attempt {attemptCount})
+          Creating new test account...
         </p>
       )}
     </div>
