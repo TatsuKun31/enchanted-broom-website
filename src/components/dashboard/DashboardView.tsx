@@ -3,10 +3,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, Clock, Home, Settings } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import Samantha from "../Samantha";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { ServiceBookingModal } from "./ServiceBookingModal";
 
 interface DashboardViewProps {
   userData: {
@@ -18,7 +18,7 @@ interface DashboardViewProps {
 }
 
 export const DashboardView = ({ userData }: DashboardViewProps) => {
-  const [showTutorial, setShowTutorial] = useState(true);
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -45,15 +45,6 @@ export const DashboardView = ({ userData }: DashboardViewProps) => {
 
   return (
     <div className="space-y-8 p-8 mt-20 animate-fade-up">
-      {showTutorial && (
-        <div className="mb-8 relative z-0">
-          <Samantha 
-            message={`Welcome to your dashboard, ${userData.name}! Here you can view your upcoming services, billing information, and manage your preferences. Let me show you around!`}
-            position="right"
-          />
-        </div>
-      )}
-      
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Welcome back, {userData.name}</h1>
         <Button variant="outline" onClick={handleSignOut}>Sign Out</Button>
@@ -87,13 +78,13 @@ export const DashboardView = ({ userData }: DashboardViewProps) => {
             <div className="text-2xl font-bold capitalize">{userData.propertyType}</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setIsBookingModalOpen(true)}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Settings</CardTitle>
-            <Settings className="h-4 w-4 text-purple-primary" />
+            <CardTitle className="text-sm font-medium">Book Service</CardTitle>
+            <Calendar className="h-4 w-4 text-purple-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">Manage</div>
+            <div className="text-2xl font-bold">Schedule Now</div>
           </CardContent>
         </Card>
       </div>
@@ -135,6 +126,11 @@ export const DashboardView = ({ userData }: DashboardViewProps) => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <ServiceBookingModal
+        open={isBookingModalOpen}
+        onOpenChange={setIsBookingModalOpen}
+      />
     </div>
   );
 };

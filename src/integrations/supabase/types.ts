@@ -9,6 +9,81 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      booking_addons: {
+        Row: {
+          booking_room_id: string | null
+          created_at: string
+          id: string
+          service_option_id: string | null
+        }
+        Insert: {
+          booking_room_id?: string | null
+          created_at?: string
+          id?: string
+          service_option_id?: string | null
+        }
+        Update: {
+          booking_room_id?: string | null
+          created_at?: string
+          id?: string
+          service_option_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_addons_booking_room_id_fkey"
+            columns: ["booking_room_id"]
+            isOneToOne: false
+            referencedRelation: "booking_rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_addons_service_option_id_fkey"
+            columns: ["service_option_id"]
+            isOneToOne: false
+            referencedRelation: "service_options"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      booking_rooms: {
+        Row: {
+          booking_id: string | null
+          created_at: string
+          id: string
+          room_type_id: string | null
+          service_type: string
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string
+          id?: string
+          room_type_id?: string | null
+          service_type: string
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string
+          id?: string
+          room_type_id?: string | null
+          service_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_rooms_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "service_bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_rooms_room_type_id_fkey"
+            columns: ["room_type_id"]
+            isOneToOne: false
+            referencedRelation: "room_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -58,6 +133,91 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      room_types: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      service_bookings: {
+        Row: {
+          created_at: string
+          id: string
+          status: string | null
+          total_price: number
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          status?: string | null
+          total_price: number
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          status?: string | null
+          total_price?: number
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_bookings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_options: {
+        Row: {
+          created_at: string
+          id: string
+          is_addon: boolean | null
+          name: string
+          price: number
+          room_type_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_addon?: boolean | null
+          name: string
+          price: number
+          room_type_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_addon?: boolean | null
+          name?: string
+          price?: number
+          room_type_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_options_room_type_id_fkey"
+            columns: ["room_type_id"]
+            isOneToOne: false
+            referencedRelation: "room_types"
             referencedColumns: ["id"]
           },
         ]
