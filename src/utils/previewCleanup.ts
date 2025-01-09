@@ -27,6 +27,50 @@ async function retryOperation<T>(
   throw lastError;
 }
 
+// Verify no bookings exist for user
+async function verifyNoBookings(userId: string): Promise<boolean> {
+  try {
+    // Check for any remaining bookings
+    const { data: bookings, error: bookingsError } = await supabase
+      .from('service_bookings')
+      .select('id')
+      .eq('user_id', userId);
+
+    if (bookingsError) {
+      console.error('Error verifying bookings cleanup:', bookingsError);
+      return false;
+    }
+
+    // Check for any remaining booking rooms
+    const { data: rooms, error: roomsError } = await supabase
+      .from('booking_rooms')
+      .select('id')
+      .eq('booking_id', bookings?.map(b => b.id) || []);
+
+    if (roomsError) {
+      console.error('Error verifying rooms cleanup:', roomsError);
+      return false;
+    }
+
+    // Check for any remaining addons
+    const { data: addons, error: addonsError } = await supabase
+      .from('booking_addons')
+      .select('id')
+      .eq('booking_room_id', rooms?.map(r => r.id) || []);
+
+    if (addonsError) {
+      console.error('Error verifying addons cleanup:', addonsError);
+      return false;
+    }
+
+    // Return true only if no bookings, rooms, or addons were found
+    return !bookings?.length && !rooms?.length && !addons?.length;
+  } catch (error) {
+    console.error('Verification error:', error);
+    return false;
+  }
+}
+
 // Delete booking addons for a specific booking room
 async function deleteBookingAddons(bookingRoomId: string) {
   return retryOperation(() =>
@@ -149,6 +193,14 @@ export async function cleanupUserData(userId: string) {
     await deleteServicePreferences(userId);
     await deleteProperties(userId);
     await deleteProfile(userId);
+
+    // Verify all bookings are deleted
+    const isCleanupComplete = await verifyNoBookings(userId);
+    if (!isCleanupComplete) {
+      console.error('Warning: Some booking data may still exist after cleanup');
+      // Attempt cleanup one more time if verification failed
+      await deleteServiceBookings(userId);
+    }
 
     // Complete sign out and clear all local data
     await signOutCompletely();
