@@ -5,23 +5,33 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { cleanupUserData } from "@/utils/previewCleanup";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
 
   useEffect(() => {
     let mounted = true;
+    let retryCount = 0;
+    const maxRetries = 3;
 
     const checkAuth = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
           console.error('Session error:', error);
+          if (retryCount < maxRetries) {
+            retryCount++;
+            setTimeout(checkAuth, 1000 * retryCount); // Exponential backoff
+            return;
+          }
           setIsAuthenticated(false);
+          toast.error("Authentication error. Please try logging in again.");
           return;
         }
         if (mounted) {
@@ -30,32 +40,52 @@ const Navigation = () => {
       } catch (error) {
         console.error('Auth check error:', error);
         setIsAuthenticated(false);
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
     };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (mounted) {
+      if (!mounted) return;
+
+      try {
         setIsAuthenticated(!!session);
         
         if (event === 'SIGNED_OUT') {
           try {
             if (session?.user?.id) {
               await cleanupUserData(session.user.id);
-              // Clear all queries from the cache
               queryClient.clear();
             }
           } catch (error) {
             console.error('Cleanup error:', error);
           } finally {
-            // Always navigate to auth page after sign out
             navigate('/auth');
           }
         } else if (event === 'TOKEN_REFRESHED') {
-          // Handle successful token refresh
           setIsAuthenticated(true);
         } else if (event === 'USER_UPDATED') {
           setIsAuthenticated(!!session);
+        } else if (event === 'SIGNED_IN') {
+          // Ensure we have a valid session before proceeding
+          const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+          if (error) {
+            throw error;
+          }
+          if (currentSession) {
+            setIsAuthenticated(true);
+            if (location.pathname === '/auth') {
+              navigate('/');
+            }
+          }
         }
+      } catch (error) {
+        console.error('Auth state change error:', error);
+        toast.error("Authentication error. Please try logging in again.");
+        setIsAuthenticated(false);
+        navigate('/auth');
       }
     });
 
@@ -66,7 +96,7 @@ const Navigation = () => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [navigate, queryClient]);
+  }, [navigate, queryClient, location.pathname]);
 
   const handleAuth = async () => {
     if (isAuthenticated) {
@@ -75,6 +105,7 @@ const Navigation = () => {
         if (error) throw error;
       } catch (error) {
         console.error('Error signing out:', error);
+        toast.error("Error signing out. Please try again.");
       }
     } else {
       navigate('/auth');
@@ -94,9 +125,24 @@ const Navigation = () => {
     const element = document.getElementById(sectionId);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
-      setIsOpen(false); // Close mobile menu after clicking
+      setIsOpen(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <nav className="fixed w-full bg-white/90 dark:bg-purple-dark/90 backdrop-blur-sm z-50 shadow-sm">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-between items-center h-16">
+            <div className="text-2xl font-bold text-purple-primary">
+              The Enchanted Broom
+            </div>
+            <ThemeToggle />
+          </div>
+        </div>
+      </nav>
+    );
+  }
 
   return (
     <nav className="fixed w-full bg-white/90 dark:bg-purple-dark/90 backdrop-blur-sm z-50 shadow-sm">
@@ -110,7 +156,6 @@ const Navigation = () => {
           </div>
           
           <div className="flex items-center gap-4">
-            {/* Desktop menu */}
             <div className="hidden md:flex items-center space-x-8">
               <button 
                 onClick={() => scrollToSection('services')} 
@@ -135,7 +180,6 @@ const Navigation = () => {
               )}
             </div>
 
-            {/* Auth button */}
             <button
               onClick={handleAuth}
               className="flex items-center justify-center gap-2 bg-purple-primary hover:bg-purple-primary/90 text-white rounded-md px-3 py-2 transition-colors"
@@ -146,7 +190,6 @@ const Navigation = () => {
             
             <ThemeToggle />
             
-            {/* Mobile menu button */}
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="md:hidden text-purple-primary"
@@ -156,7 +199,6 @@ const Navigation = () => {
           </div>
         </div>
 
-        {/* Mobile menu */}
         {isOpen && (
           <div className="md:hidden py-4 animate-fade-in">
             <div className="flex flex-col space-y-4">
