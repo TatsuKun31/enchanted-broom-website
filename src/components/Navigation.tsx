@@ -1,14 +1,35 @@
-import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Menu, X, LayoutDashboard } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+    };
+
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleBookNow = () => {
     navigate('/auth');
+  };
+
+  const handleDashboard = () => {
+    navigate('/room-details');
   };
 
   return (
@@ -22,12 +43,22 @@ const Navigation = () => {
             <div className="hidden md:flex items-center space-x-8">
               <a href="#services" className="text-purple-dark dark:text-white/90 hover:text-purple-primary transition-colors">Services</a>
               <a href="#why-us" className="text-purple-dark dark:text-white/90 hover:text-purple-primary transition-colors">Why Us</a>
-              <button 
-                onClick={handleBookNow}
-                className="bg-purple-primary hover:bg-purple-primary/90 text-white px-6 py-2 rounded-lg transition-all duration-300 hover:scale-105"
-              >
-                Book Now
-              </button>
+              {isAuthenticated ? (
+                <button 
+                  onClick={handleDashboard}
+                  className="flex items-center gap-2 text-purple-dark dark:text-white/90 hover:text-purple-primary transition-colors"
+                >
+                  <LayoutDashboard size={20} />
+                  <span>Dashboard</span>
+                </button>
+              ) : (
+                <button 
+                  onClick={handleBookNow}
+                  className="bg-purple-primary hover:bg-purple-primary/90 text-white px-6 py-2 rounded-lg transition-all duration-300 hover:scale-105"
+                >
+                  Book Now
+                </button>
+              )}
             </div>
             
             <ThemeToggle />
@@ -48,12 +79,22 @@ const Navigation = () => {
             <div className="flex flex-col space-y-4">
               <a href="#services" className="text-purple-dark dark:text-white/90 hover:text-purple-primary transition-colors">Services</a>
               <a href="#why-us" className="text-purple-dark dark:text-white/90 hover:text-purple-primary transition-colors">Why Us</a>
-              <button 
-                onClick={handleBookNow}
-                className="bg-purple-primary hover:bg-purple-primary/90 text-white px-6 py-2 rounded-lg transition-all duration-300 w-full"
-              >
-                Book Now
-              </button>
+              {isAuthenticated ? (
+                <button 
+                  onClick={handleDashboard}
+                  className="flex items-center gap-2 text-purple-dark dark:text-white/90 hover:text-purple-primary transition-colors"
+                >
+                  <LayoutDashboard size={20} />
+                  <span>Dashboard</span>
+                </button>
+              ) : (
+                <button 
+                  onClick={handleBookNow}
+                  className="bg-purple-primary hover:bg-purple-primary/90 text-white px-6 py-2 rounded-lg transition-all duration-300 w-full"
+                >
+                  Book Now
+                </button>
+              )}
             </div>
           </div>
         )}
