@@ -10,14 +10,13 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
-    storage: localStorage // Explicitly set storage
+    storage: localStorage
   },
   global: {
     headers: {
       'x-my-custom-header': 'my-app-name',
     },
   },
-  // Add retry configuration
   db: {
     schema: 'public'
   }
