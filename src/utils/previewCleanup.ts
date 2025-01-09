@@ -1,15 +1,15 @@
 import { supabase } from "@/integrations/supabase/client";
-import { PostgrestResponse } from "@supabase/supabase-js";
+import { PostgrestResponse, PostgrestSingleResponse } from "@supabase/supabase-js";
 
 // Utility function for delayed retry
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 // Generic retry wrapper for database operations
 async function retryOperation<T>(
-  operation: () => Promise<T>,
+  operation: () => Promise<PostgrestSingleResponse<T>>,
   maxRetries = 3,
   delay = 1000
-): Promise<T> {
+): Promise<PostgrestSingleResponse<T>> {
   let lastError: any;
   
   for (let i = 0; i < maxRetries; i++) {
@@ -34,7 +34,7 @@ async function deleteBookingAddons(bookingRoomId: string) {
       .from('booking_addons')
       .delete()
       .eq('booking_room_id', bookingRoomId)
-      .then()
+      .single()
   );
 }
 
@@ -56,7 +56,7 @@ async function deleteBookingRooms(bookingId: string) {
       .from('booking_rooms')
       .delete()
       .eq('booking_id', bookingId)
-      .then()
+      .single()
   );
 }
 
@@ -78,7 +78,7 @@ async function deleteServiceBookings(userId: string) {
       .from('service_bookings')
       .delete()
       .eq('user_id', userId)
-      .then()
+      .single()
   );
 }
 
@@ -89,7 +89,7 @@ async function deleteServicePreferences(userId: string) {
       .from('service_preferences')
       .delete()
       .eq('user_id', userId)
-      .then()
+      .single()
   );
 }
 
@@ -100,7 +100,7 @@ async function deleteProperties(userId: string) {
       .from('properties')
       .delete()
       .eq('user_id', userId)
-      .then()
+      .single()
   );
 }
 
@@ -111,7 +111,7 @@ async function deleteProfile(userId: string) {
       .from('profiles')
       .delete()
       .eq('id', userId)
-      .then()
+      .single()
   );
 }
 
