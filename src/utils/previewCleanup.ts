@@ -76,6 +76,30 @@ async function deleteProfile(userId: string) {
     .eq('id', userId);
 }
 
+// Sign out user completely
+async function signOutCompletely() {
+  try {
+    const { error } = await supabase.auth.signOut({
+      scope: 'global'  // This ensures complete sign out across all tabs/windows
+    });
+    if (error) throw error;
+    
+    // Clear all storage
+    localStorage.clear();
+    sessionStorage.clear();
+    
+    // Clear any session cookies
+    document.cookie.split(";").forEach((c) => {
+      document.cookie = c
+        .replace(/^ +/, "")
+        .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+    });
+  } catch (error) {
+    console.error('Sign out error:', error);
+    throw error;
+  }
+}
+
 // Main cleanup function
 export async function cleanupUserData(userId: string) {
   if (!userId) return;
@@ -111,10 +135,8 @@ export async function cleanupUserData(userId: string) {
     await deleteProperties(userId);
     await deleteProfile(userId);
 
-    // Clear any stored session data
-    await supabase.auth.signOut({ scope: 'local' });
-    localStorage.clear();
-    sessionStorage.clear();
+    // Complete sign out
+    await signOutCompletely();
 
   } catch (error) {
     console.error('Preview cleanup error:', error);

@@ -18,6 +18,9 @@ const Navigation = () => {
         const { data: { session } } = await supabase.auth.getSession();
         if (mounted) {
           setIsAuthenticated(!!session);
+          if (!session) {
+            navigate('/auth');
+          }
         }
       } catch (error) {
         console.error('Auth check error:', error);
@@ -33,17 +36,17 @@ const Navigation = () => {
             if (session?.user?.id) {
               await cleanupUserData(session.user.id);
             }
-            // Force clear any remaining auth state
-            localStorage.clear();
-            sessionStorage.clear();
             navigate('/auth');
           } catch (error) {
             console.error('Cleanup error:', error);
+            // Force navigation even if cleanup fails
+            navigate('/auth');
           }
         }
       }
     });
 
+    // Initial auth check
     checkAuth();
 
     return () => {
