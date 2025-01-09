@@ -1,24 +1,13 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Minus } from "lucide-react";
-
-interface Room {
-  id: string;
-  type: string;
-  quantity?: number;
-  serviceType: "standard" | "deep";
-  addons: string[];
-}
-
-interface ServiceBookingModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}
+import { RoomSelection } from "./booking/RoomSelection";
+import { ServiceSelection } from "./booking/ServiceSelection";
+import { BookingSummary } from "./booking/BookingSummary";
+import { Room } from "./booking/types";
 
 const COUNTABLE_ROOMS = [
   "Bathroom",
@@ -27,6 +16,11 @@ const COUNTABLE_ROOMS = [
   "Media Room",
   "Home Office"
 ];
+
+interface ServiceBookingModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
 
 export const ServiceBookingModal = ({ open, onOpenChange }: ServiceBookingModalProps) => {
   const [step, setStep] = useState(1);
@@ -38,17 +32,6 @@ export const ServiceBookingModal = ({ open, onOpenChange }: ServiceBookingModalP
     queryFn: async () => {
       const { data, error } = await supabase
         .from("room_types")
-        .select("*");
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const { data: serviceOptions } = useQuery({
-    queryKey: ["serviceOptions"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("service_options")
         .select("*");
       if (error) throw error;
       return data;
@@ -174,47 +157,13 @@ export const ServiceBookingModal = ({ open, onOpenChange }: ServiceBookingModalP
 
         {step === 1 && (
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              {roomTypes?.map((roomType) => (
-                <div key={roomType.id} className="space-y-2">
-                  <Button
-                    variant={selectedRooms.some(room => room.type === roomType.name) ? "default" : "outline"}
-                    onClick={() => handleRoomSelection(roomType.name)}
-                    className="w-full"
-                  >
-                    {roomType.name}
-                  </Button>
-                  {selectedRooms.some(room => room.type === roomType.name) && 
-                   COUNTABLE_ROOMS.includes(roomType.name) && (
-                    <div className="flex items-center justify-center gap-2 mt-1">
-                      <Button 
-                        size="icon" 
-                        variant="outline"
-                        onClick={() => handleQuantityChange(
-                          selectedRooms.find(r => r.type === roomType.name)!.id,
-                          -1
-                        )}
-                      >
-                        <Minus className="h-4 w-4" />
-                      </Button>
-                      <span className="min-w-[2rem] text-center">
-                        {selectedRooms.find(r => r.type === roomType.name)?.quantity || 1}
-                      </span>
-                      <Button 
-                        size="icon" 
-                        variant="outline"
-                        onClick={() => handleQuantityChange(
-                          selectedRooms.find(r => r.type === roomType.name)!.id,
-                          1
-                        )}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+            <RoomSelection
+              roomTypes={roomTypes || []}
+              selectedRooms={selectedRooms}
+              onRoomSelection={handleRoomSelection}
+              onQuantityChange={handleQuantityChange}
+              COUNTABLE_ROOMS={COUNTABLE_ROOMS}
+            />
             <div className="flex justify-end">
               <Button onClick={() => setStep(2)} disabled={selectedRooms.length === 0}>
                 Next
@@ -225,57 +174,11 @@ export const ServiceBookingModal = ({ open, onOpenChange }: ServiceBookingModalP
 
         {step === 2 && (
           <div className="space-y-6">
-            {selectedRooms.map((room) => (
-              <div key={room.id} className="space-y-4 border p-4 rounded-lg">
-                <h3 className="font-semibold">
-                  {room.type} {room.quantity && room.quantity > 1 ? `(${room.quantity}x)` : ''}
-                </h3>
-                <div className="space-y-2">
-                  <div className="flex gap-4">
-                    <Button
-                      variant={room.serviceType === "standard" ? "default" : "outline"}
-                      onClick={() => handleServiceTypeChange(room.id, "standard")}
-                      size="sm"
-                    >
-                      Standard Clean
-                    </Button>
-                    <Button
-                      variant={room.serviceType === "deep" ? "default" : "outline"}
-                      onClick={() => handleServiceTypeChange(room.id, "deep")}
-                      size="sm"
-                    >
-                      Deep Clean
-                    </Button>
-                  </div>
-                  {room.type === "Bedroom" && (
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`make-beds-${room.id}`}
-                        checked={room.addons.includes("Make Beds")}
-                        onCheckedChange={() => handleAddonToggle(room.id, "Make Beds")}
-                      />
-                      <label htmlFor={`make-beds-${room.id}`}>Make Beds (Included)</label>
-                    </div>
-                  )}
-                  {room.type === "Kitchen" && (
-                    <div className="space-y-2">
-                      {["Do Dishes", "Oven Cleaning", "Fridge Cleanout"].map((addon) => (
-                        <div key={addon} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`${addon}-${room.id}`}
-                            checked={room.addons.includes(addon)}
-                            onCheckedChange={() => handleAddonToggle(room.id, addon)}
-                          />
-                          <label htmlFor={`${addon}-${room.id}`}>
-                            {addon} (+$10)
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
+            <ServiceSelection
+              selectedRooms={selectedRooms}
+              onServiceTypeChange={handleServiceTypeChange}
+              onAddonToggle={handleAddonToggle}
+            />
             <div className="flex justify-between">
               <Button variant="outline" onClick={() => setStep(1)}>
                 Back
@@ -288,43 +191,12 @@ export const ServiceBookingModal = ({ open, onOpenChange }: ServiceBookingModalP
         )}
 
         {step === 3 && (
-          <div className="space-y-6">
-            <div className="space-y-4">
-              {selectedRooms.map((room) => (
-                <div key={room.id} className="border p-4 rounded-lg">
-                  <h3 className="font-semibold">
-                    {room.type} {room.quantity && room.quantity > 1 ? `(${room.quantity}x)` : ''}
-                  </h3>
-                  <p>Service: {room.serviceType === "deep" ? "Deep Clean ($100)" : "Standard Clean ($50)"}</p>
-                  {room.addons.length > 0 && (
-                    <div className="mt-2">
-                      <p className="font-medium">Add-ons:</p>
-                      <ul className="list-disc list-inside">
-                        {room.addons.map((addon) => (
-                          <li key={addon}>
-                            {addon} {addon !== "Make Beds" && "(+$10)"}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              ))}
-              <div className="border-t pt-4">
-                <p className="text-lg font-semibold">
-                  Total: ${calculateTotal()}
-                </p>
-              </div>
-            </div>
-            <div className="flex justify-between">
-              <Button variant="outline" onClick={() => setStep(2)}>
-                Back
-              </Button>
-              <Button onClick={handleSubmit}>
-                Book Service
-              </Button>
-            </div>
-          </div>
+          <BookingSummary
+            selectedRooms={selectedRooms}
+            onBack={() => setStep(2)}
+            onSubmit={handleSubmit}
+            calculateTotal={calculateTotal}
+          />
         )}
       </DialogContent>
     </Dialog>
