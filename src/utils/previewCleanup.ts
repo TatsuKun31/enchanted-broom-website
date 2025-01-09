@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { PostgrestResponse } from "@supabase/supabase-js";
+import { PostgrestResponse, PostgrestSingleResponse } from "@supabase/supabase-js";
 
 // Utility function for delayed retry
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -14,11 +14,13 @@ async function retryOperation<T>(
   
   for (let i = 0; i < maxRetries; i++) {
     try {
-      return await operation();
+      const result = await operation();
+      if (result.error) throw result.error;
+      return result;
     } catch (error) {
       lastError = error;
       if (i < maxRetries - 1) {
-        await wait(delay * Math.pow(2, i)); // Exponential backoff
+        await wait(delay * Math.pow(2, i));
       }
     }
   }
@@ -28,62 +30,50 @@ async function retryOperation<T>(
 
 // Delete booking addons for a specific booking
 async function deleteBookingAddons(bookingRoomId: string) {
-  return retryOperation(() =>
-    supabase
-      .from('booking_addons')
-      .delete()
-      .eq('booking_room_id', bookingRoomId)
-  );
+  return await supabase
+    .from('booking_addons')
+    .delete()
+    .eq('booking_room_id', bookingRoomId);
 }
 
 // Delete booking rooms for a specific booking
 async function deleteBookingRooms(bookingId: string) {
-  return retryOperation(() =>
-    supabase
-      .from('booking_rooms')
-      .delete()
-      .eq('booking_id', bookingId)
-  );
+  return await supabase
+    .from('booking_rooms')
+    .delete()
+    .eq('booking_id', bookingId);
 }
 
 // Delete service bookings for a user
 async function deleteServiceBookings(userId: string) {
-  return retryOperation(() =>
-    supabase
-      .from('service_bookings')
-      .delete()
-      .eq('user_id', userId)
-  );
+  return await supabase
+    .from('service_bookings')
+    .delete()
+    .eq('user_id', userId);
 }
 
 // Delete service preferences for a user
 async function deleteServicePreferences(userId: string) {
-  return retryOperation(() =>
-    supabase
-      .from('service_preferences')
-      .delete()
-      .eq('user_id', userId)
-  );
+  return await supabase
+    .from('service_preferences')
+    .delete()
+    .eq('user_id', userId);
 }
 
 // Delete properties for a user
 async function deleteProperties(userId: string) {
-  return retryOperation(() =>
-    supabase
-      .from('properties')
-      .delete()
-      .eq('user_id', userId)
-  );
+  return await supabase
+    .from('properties')
+    .delete()
+    .eq('user_id', userId);
 }
 
 // Delete user profile
 async function deleteProfile(userId: string) {
-  return retryOperation(() =>
-    supabase
-      .from('profiles')
-      .delete()
-      .eq('id', userId)
-  );
+  return await supabase
+    .from('profiles')
+    .delete()
+    .eq('id', userId);
 }
 
 // Main cleanup function
@@ -92,22 +82,18 @@ export async function cleanupUserData(userId: string) {
 
   try {
     // Get all bookings for the user
-    const { data: bookings } = await retryOperation(() =>
-      supabase
-        .from('service_bookings')
-        .select('id')
-        .eq('user_id', userId)
-    );
+    const { data: bookings } = await supabase
+      .from('service_bookings')
+      .select('id')
+      .eq('user_id', userId);
 
     if (bookings) {
       // Delete all booking related data
       for (const booking of bookings) {
-        const { data: rooms } = await retryOperation(() =>
-          supabase
-            .from('booking_rooms')
-            .select('id')
-            .eq('booking_id', booking.id)
-        );
+        const { data: rooms } = await supabase
+          .from('booking_rooms')
+          .select('id')
+          .eq('booking_id', booking.id);
 
         if (rooms) {
           for (const room of rooms) {
@@ -125,7 +111,13 @@ export async function cleanupUserData(userId: string) {
     await deleteProperties(userId);
     await deleteProfile(userId);
 
+    // Clear any stored session data
+    await supabase.auth.signOut({ scope: 'local' });
+    localStorage.clear();
+    sessionStorage.clear();
+
   } catch (error) {
     console.error('Preview cleanup error:', error);
+    throw error;
   }
 }

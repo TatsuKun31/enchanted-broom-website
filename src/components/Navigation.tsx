@@ -28,9 +28,15 @@ const Navigation = () => {
       if (mounted) {
         setIsAuthenticated(!!session);
         
-        if (event === 'SIGNED_OUT' && session?.user?.id) {
+        if (event === 'SIGNED_OUT') {
           try {
-            await cleanupUserData(session.user.id);
+            if (session?.user?.id) {
+              await cleanupUserData(session.user.id);
+            }
+            // Force clear any remaining auth state
+            localStorage.clear();
+            sessionStorage.clear();
+            navigate('/auth');
           } catch (error) {
             console.error('Cleanup error:', error);
           }
@@ -44,7 +50,7 @@ const Navigation = () => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [navigate]);
 
   const handleBookNow = () => {
     navigate('/auth');
