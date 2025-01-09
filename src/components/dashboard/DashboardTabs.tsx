@@ -22,7 +22,7 @@ export const DashboardTabs = () => {
             id,
             room_type:room_types!inner(name),
             service_type,
-            booking_addons!inner (
+            booking_addons (
               service_options!inner(name)
             )
           )
@@ -36,6 +36,8 @@ export const DashboardTabs = () => {
         console.error("Error fetching upcoming services:", error);
         return [];
       }
+
+      console.log("Fetched bookings:", bookings); // Debug log
 
       return bookings.map(booking => ({
         ...booking,
