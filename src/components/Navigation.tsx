@@ -9,7 +9,40 @@ const cleanupUserData = async (userId: string) => {
   if (!userId) return;
   
   try {
-    // Delete service bookings (this will cascade to booking_rooms and booking_addons)
+    // First, get all service bookings for the user
+    const { data: bookings } = await supabase
+      .from('service_bookings')
+      .select('id')
+      .eq('user_id', userId);
+
+    if (bookings) {
+      // Delete booking_addons first (they reference booking_rooms)
+      for (const booking of bookings) {
+        const { data: rooms } = await supabase
+          .from('booking_rooms')
+          .select('id')
+          .eq('booking_id', booking.id);
+          
+        if (rooms) {
+          for (const room of rooms) {
+            await supabase
+              .from('booking_addons')
+              .delete()
+              .eq('booking_room_id', room.id);
+          }
+        }
+      }
+
+      // Then delete booking_rooms
+      for (const booking of bookings) {
+        await supabase
+          .from('booking_rooms')
+          .delete()
+          .eq('booking_id', booking.id);
+      }
+    }
+
+    // Now we can safely delete service_bookings
     await supabase
       .from('service_bookings')
       .delete()
