@@ -1,14 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navigation from "@/components/Navigation";
 import { BasicInfoStep } from "@/components/onboarding/BasicInfoStep";
 import { PropertyDetailsStep } from "@/components/onboarding/PropertyDetailsStep";
 import { ServicePreferencesStep } from "@/components/onboarding/ServicePreferencesStep";
 import { DashboardView } from "@/components/dashboard/DashboardView";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 type OnboardingStep = "basic-info" | "property-details" | "service-preferences" | "completed";
 
 const RoomDetails = () => {
   const [currentStep, setCurrentStep] = useState<OnboardingStep>("basic-info");
+  const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
   const [userData, setUserData] = useState({
     name: "",
     phone: "",
@@ -17,6 +22,75 @@ const RoomDetails = () => {
     frequency: "",
     timePreference: "",
   });
+
+  useEffect(() => {
+    const checkUserData = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          navigate('/auth');
+          return;
+        }
+
+        // Check if user has completed profile
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+
+        if (profileError) {
+          console.error('Profile fetch error:', profileError);
+          return;
+        }
+
+        // Check if user has property details
+        const { data: property, error: propertyError } = await supabase
+          .from('properties')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .single();
+
+        if (propertyError && propertyError.code !== 'PGRST116') { // PGRST116 is "no rows returned" error
+          console.error('Property fetch error:', propertyError);
+          return;
+        }
+
+        // Check if user has service preferences
+        const { data: preferences, error: preferencesError } = await supabase
+          .from('service_preferences')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .single();
+
+        if (preferencesError && preferencesError.code !== 'PGRST116') {
+          console.error('Preferences fetch error:', preferencesError);
+          return;
+        }
+
+        // If user has all required data, skip onboarding
+        if (profile?.name && property?.property_type && preferences?.frequency) {
+          setUserData({
+            name: profile.name || "",
+            phone: profile.phone || "",
+            propertyType: property.property_type || "",
+            address: property.address || "",
+            frequency: preferences.frequency || "",
+            timePreference: preferences.time_preference || "",
+          });
+          setCurrentStep("completed");
+        }
+      } catch (error) {
+        console.error('Error checking user data:', error);
+        toast.error("Error loading user data");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkUserData();
+  }, [navigate]);
 
   const handleBasicInfoNext = (data: { name: string; phone: string }) => {
     setUserData((prev) => ({ ...prev, ...data }));
@@ -32,6 +106,17 @@ const RoomDetails = () => {
     setUserData((prev) => ({ ...prev, ...data }));
     setCurrentStep("completed");
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white dark:from-purple-dark/20 dark:to-purple-dark/40">
+        <Navigation />
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-primary"></div>
+        </div>
+      </div>
+    );
+  }
 
   const renderStep = () => {
     switch (currentStep) {
