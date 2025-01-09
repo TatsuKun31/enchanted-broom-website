@@ -13,7 +13,6 @@ type OnboardingStep = "basic-info" | "property-details" | "service-preferences" 
 const RoomDetails = () => {
   const [currentStep, setCurrentStep] = useState<OnboardingStep>("basic-info");
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const [userData, setUserData] = useState({
     name: "",
@@ -27,7 +26,6 @@ const RoomDetails = () => {
   useEffect(() => {
     const checkUserData = async () => {
       try {
-        setError(null);
         const { data: { session } } = await supabase.auth.getSession();
         
         if (!session) {
@@ -44,7 +42,6 @@ const RoomDetails = () => {
 
         if (profileError) {
           console.error('Profile fetch error:', profileError);
-          setError('Error fetching profile data');
           return;
         }
 
@@ -57,7 +54,6 @@ const RoomDetails = () => {
 
         if (propertyError && propertyError.code !== 'PGRST116') {
           console.error('Property fetch error:', propertyError);
-          setError('Error fetching property data');
           return;
         }
 
@@ -70,7 +66,6 @@ const RoomDetails = () => {
 
         if (preferencesError && preferencesError.code !== 'PGRST116') {
           console.error('Preferences fetch error:', preferencesError);
-          setError('Error fetching preferences data');
           return;
         }
 
@@ -97,7 +92,6 @@ const RoomDetails = () => {
         }
       } catch (error) {
         console.error('Error checking user data:', error);
-        setError('An unexpected error occurred');
         toast.error("Error loading user data");
       } finally {
         setIsLoading(false);
@@ -105,18 +99,6 @@ const RoomDetails = () => {
     };
 
     checkUserData();
-
-    // Set up auth state change listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_OUT') {
-        setIsLoading(false);
-        navigate('/');
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
   }, [navigate]);
 
   const handleBasicInfoNext = (data: { name: string; phone: string }) => {
@@ -140,25 +122,6 @@ const RoomDetails = () => {
         <Navigation />
         <div className="flex items-center justify-center min-h-screen">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-primary"></div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white dark:from-purple-dark/20 dark:to-purple-dark/40">
-        <Navigation />
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center space-y-4">
-            <p className="text-red-500">{error}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="text-purple-primary hover:text-purple-primary/80"
-            >
-              Try again
-            </button>
-          </div>
         </div>
       </div>
     );

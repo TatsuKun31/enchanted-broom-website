@@ -1,13 +1,11 @@
 import { useState, useEffect } from "react";
-import { Menu, X, LayoutDashboard } from "lucide-react";
+import { Menu, X, LayoutDashboard, LogIn, LogOut } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { cleanupUserData } from "@/utils/previewCleanup";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { AuthButton } from "./auth/AuthButton";
-import { MobileMenu } from "./navigation/MobileMenu";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -64,7 +62,7 @@ const Navigation = () => {
           } catch (error) {
             console.error('Cleanup error:', error);
           } finally {
-            navigate('/'); // Changed from '/auth' to '/'
+            navigate('/auth');
           }
         } else if (event === 'TOKEN_REFRESHED') {
           setIsAuthenticated(true);
@@ -182,10 +180,13 @@ const Navigation = () => {
               )}
             </div>
 
-            <AuthButton 
-              isAuthenticated={isAuthenticated}
+            <button
               onClick={handleAuth}
-            />
+              className="flex items-center justify-center gap-2 bg-purple-primary hover:bg-purple-primary/90 text-white rounded-md px-3 py-2 transition-colors"
+              aria-label={isAuthenticated ? "Sign out" : "Sign in"}
+            >
+              {isAuthenticated ? <LogOut className="w-5 h-5 text-white" /> : <LogIn className="w-5 h-5 text-white" />}
+            </button>
             
             <ThemeToggle />
             
@@ -199,11 +200,31 @@ const Navigation = () => {
         </div>
 
         {isOpen && (
-          <MobileMenu 
-            isAuthenticated={isAuthenticated}
-            onNavigate={scrollToSection}
-            onDashboard={handleDashboard}
-          />
+          <div className="md:hidden py-4 animate-fade-in">
+            <div className="flex flex-col space-y-4">
+              <button 
+                onClick={() => scrollToSection('services')}
+                className="text-purple-dark dark:text-white/90 hover:text-purple-primary transition-colors text-left"
+              >
+                Services
+              </button>
+              <button 
+                onClick={() => scrollToSection('why-us')}
+                className="text-purple-dark dark:text-white/90 hover:text-purple-primary transition-colors text-left"
+              >
+                Why Us
+              </button>
+              {isAuthenticated && (
+                <button 
+                  onClick={handleDashboard}
+                  className="flex items-center gap-2 text-purple-dark dark:text-white/90 hover:text-purple-primary transition-colors"
+                >
+                  <LayoutDashboard size={20} />
+                  <span>Dashboard</span>
+                </button>
+              )}
+            </div>
+          </div>
         )}
       </div>
     </nav>

@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 
 export const DevLogin = () => {
   const navigate = useNavigate();
+  const isDevelopment = import.meta.env.DEV;
   const [currentTestNumber, setCurrentTestNumber] = useState(0);
 
   // Load the last used test number from localStorage
@@ -62,6 +63,8 @@ export const DevLogin = () => {
       console.error("Dev login error:", error);
     }
   };
+
+  if (!isDevelopment) return null;
 
   return (
     <div className="pt-4 border-t">
