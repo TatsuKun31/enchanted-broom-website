@@ -4,9 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { AuthError } from "@supabase/supabase-js";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const Auth = () => {
   const navigate = useNavigate();
