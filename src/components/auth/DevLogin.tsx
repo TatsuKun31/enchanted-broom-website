@@ -19,42 +19,42 @@ export const DevLogin = () => {
     }
   }, []);
 
-  const checkUserExists = async (email: string): Promise<boolean> => {
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: 'wrong-password-to-check-existence'
-      });
-
-      // These specific error messages indicate the user exists
-      return error?.message.includes('Invalid login credentials') || 
-             error?.message.includes('Email not confirmed');
-    } catch {
-      // Silently fail and assume user doesn't exist
-      return false;
-    }
-  };
-
   const findNextAvailableEmail = async (startNumber: number): Promise<{ email: string; number: number }> => {
     let testNumber = startNumber;
-    let maxAttempts = 100;
+    let maxAttempts = 100; // Prevent infinite loops
     let attempts = 0;
-    
+
     while (attempts < maxAttempts) {
       setAttemptCount(attempts + 1);
       const testEmail = `test${testNumber}@example.com`;
       
       try {
-        const userExists = await checkUserExists(testEmail);
-        if (!userExists) {
-          return { email: testEmail, number: testNumber };
+        const { data: { user }, error } = await supabase.auth.signInWithPassword({
+          email: testEmail,
+          password: 'wrong-password'
+        });
+
+        // If no error or user exists, increment and continue
+        if (!error || user) {
+          testNumber++;
+          attempts++;
+          continue;
         }
+
+        // If error indicates invalid credentials, the email exists
+        if (error.message.includes('Invalid login credentials')) {
+          testNumber++;
+          attempts++;
+          continue;
+        }
+
+        // If we get here, the email might be available
+        return { email: testEmail, number: testNumber };
       } catch {
-        // Silently continue to next attempt
+        // On any error, try the next number
+        testNumber++;
+        attempts++;
       }
-      
-      testNumber++;
-      attempts++;
     }
     
     throw new Error("Could not find available email after maximum attempts");
@@ -69,6 +69,7 @@ export const DevLogin = () => {
       const { email: availableEmail, number: finalTestNumber } = await findNextAvailableEmail(nextTestNumber);
       const testPassword = 'testpassword123';
 
+      // Try to sign up with the email
       const { error: signUpError } = await supabase.auth.signUp({
         email: availableEmail,
         password: testPassword
@@ -91,6 +92,7 @@ export const DevLogin = () => {
         throw signUpError;
       }
 
+      // Try to sign in with the new account
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: availableEmail,
         password: testPassword
@@ -100,19 +102,19 @@ export const DevLogin = () => {
         throw signInError;
       }
 
-      // Save the new test number to localStorage
+      // Save the successful test number
       localStorage.setItem('lastTestNumber', finalTestNumber.toString());
       setCurrentTestNumber(finalTestNumber);
       
       toast.success(`Logged in as ${availableEmail}`);
       navigate("/room-details");
     } catch (error) {
+      console.error("Dev login error:", error);
       if (error instanceof AuthError) {
         toast.error(error.message);
       } else {
         toast.error("Dev login failed. Please try again.");
       }
-      console.error("Dev login error:", error);
     } finally {
       setIsSearching(false);
       setAttemptCount(0);
