@@ -41,14 +41,24 @@ const Auth = () => {
         password: 'testpassword123'
       });
 
+      if (signUpError) {
+        if (signUpError.message.includes('email_provider_disabled')) {
+          toast.error("Email authentication is disabled. Please enable it in Supabase settings.");
+          return;
+        }
+      }
+
       // Attempt to sign in regardless of whether sign up succeeded
-      // (in case the account already exists)
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: 'test@example.com',
         password: 'testpassword123'
       });
 
       if (signInError) {
+        if (signInError.message.includes('email_provider_disabled')) {
+          toast.error("Email authentication is disabled. Please enable it in Supabase settings.");
+          return;
+        }
         throw signInError;
       }
       
