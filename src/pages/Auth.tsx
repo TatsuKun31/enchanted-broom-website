@@ -1,72 +1,12 @@
 import { Auth as SupabaseAuth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { DevLogin } from "@/components/auth/DevLogin";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 
 const Auth = () => {
-  const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(true);
-  const isDevelopment = import.meta.env.DEV;
-
-  useEffect(() => {
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        navigate("/room-details");
-      }
-      setIsLoading(false);
-    };
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN") {
-        navigate("/room-details");
-      }
-    });
-
-    checkUser();
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
-
-  const handleDevLogin = async () => {
-    try {
-      // First try to create the test account if it doesn't exist
-      const { error: signUpError } = await supabase.auth.signUp({
-        email: 'test@example.com',
-        password: 'testpassword123'
-      });
-
-      if (signUpError) {
-        if (signUpError.message.includes('email_provider_disabled')) {
-          toast.error("Email authentication is disabled. Please enable it in Supabase settings.");
-          return;
-        }
-      }
-
-      // Attempt to sign in regardless of whether sign up succeeded
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: 'test@example.com',
-        password: 'testpassword123'
-      });
-
-      if (signInError) {
-        if (signInError.message.includes('email_provider_disabled')) {
-          toast.error("Email authentication is disabled. Please enable it in Supabase settings.");
-          return;
-        }
-        throw signInError;
-      }
-      
-      navigate("/room-details");
-    } catch (error) {
-      toast.error("Dev login failed. Please try again.");
-      console.error("Dev login error:", error);
-    }
-  };
+  const { isLoading } = useAuthRedirect();
 
   if (isLoading) {
     return null;
@@ -120,17 +60,7 @@ const Auth = () => {
             }}
             providers={["google"]}
           />
-          {isDevelopment && (
-            <div className="pt-4 border-t">
-              <Button 
-                onClick={handleDevLogin}
-                variant="outline"
-                className="w-full"
-              >
-                Dev Login (test@example.com)
-              </Button>
-            </div>
-          )}
+          <DevLogin />
         </CardContent>
       </Card>
     </div>
