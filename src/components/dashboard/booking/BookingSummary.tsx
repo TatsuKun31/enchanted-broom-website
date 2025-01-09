@@ -1,5 +1,8 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Room } from "./types";
+import { BookingConfirmationModal } from "./BookingConfirmationModal";
+import { useToast } from "@/hooks/use-toast";
 
 interface BookingSummaryProps {
   selectedRooms: Room[];
@@ -14,6 +17,18 @@ export const BookingSummary = ({
   onSubmit,
   calculateTotal,
 }: BookingSummaryProps) => {
+  const [showCalendar, setShowCalendar] = useState(false);
+  const { toast } = useToast();
+
+  const handleDateConfirmed = (date: Date) => {
+    toast({
+      title: "Booking Confirmed",
+      description: `Your cleaning service has been scheduled for ${date.toLocaleDateString()}`,
+    });
+    setShowCalendar(false);
+    onSubmit();
+  };
+
   return (
     <div className="space-y-6">
       <div className="space-y-4">
@@ -47,10 +62,16 @@ export const BookingSummary = ({
         <Button variant="outline" onClick={onBack}>
           Back
         </Button>
-        <Button onClick={onSubmit}>
+        <Button onClick={() => setShowCalendar(true)}>
           Book Service
         </Button>
       </div>
+
+      <BookingConfirmationModal
+        open={showCalendar}
+        onOpenChange={setShowCalendar}
+        onConfirm={handleDateConfirmed}
+      />
     </div>
   );
 };
