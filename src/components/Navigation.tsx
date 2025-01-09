@@ -11,23 +11,37 @@ const Navigation = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    let mounted = true;
+
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setIsAuthenticated(!!session);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (mounted) {
+          setIsAuthenticated(!!session);
+        }
+      } catch (error) {
+        console.error('Auth check error:', error);
+      }
     };
 
-    checkAuth();
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setIsAuthenticated(!!session);
-      
-      // PREVIEW ONLY - Handle cleanup on sign out
-      if (event === 'SIGNED_OUT' && session?.user?.id) {
-        await cleanupUserData(session.user.id);
+      if (mounted) {
+        setIsAuthenticated(!!session);
+        
+        if (event === 'SIGNED_OUT' && session?.user?.id) {
+          try {
+            await cleanupUserData(session.user.id);
+          } catch (error) {
+            console.error('Cleanup error:', error);
+          }
+        }
       }
     });
 
+    checkAuth();
+
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, []);

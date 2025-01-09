@@ -1,111 +1,130 @@
 import { supabase } from "@/integrations/supabase/client";
 
-const MAX_RETRIES = 3;
-const RETRY_DELAY = 200; // ms
+// Utility function for delayed retry
+const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-const retry = async <T>(
+// Generic retry wrapper for database operations
+async function retryOperation<T>(
   operation: () => Promise<T>,
-  retries = MAX_RETRIES
-): Promise<T> => {
-  try {
-    return await operation();
-  } catch (error) {
-    if (retries > 0) {
-      await sleep(RETRY_DELAY);
-      return retry(operation, retries - 1);
-    }
-    throw error;
-  }
-};
-
-// PREVIEW ONLY - Remove this file before production deployment
-export const cleanupUserData = async (userId: string) => {
-  if (!userId) return;
+  maxRetries = 3,
+  delay = 1000
+): Promise<T> {
+  let lastError: any;
   
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error;
+      if (i < maxRetries - 1) {
+        await wait(delay * Math.pow(2, i)); // Exponential backoff
+      }
+    }
+  }
+  
+  throw lastError;
+}
+
+// Delete booking addons for a specific booking
+async function deleteBookingAddons(bookingRoomId: string) {
+  return retryOperation(() =>
+    supabase
+      .from('booking_addons')
+      .delete()
+      .eq('booking_room_id', bookingRoomId)
+  );
+}
+
+// Delete booking rooms for a specific booking
+async function deleteBookingRooms(bookingId: string) {
+  return retryOperation(() =>
+    supabase
+      .from('booking_rooms')
+      .delete()
+      .eq('booking_id', bookingId)
+  );
+}
+
+// Delete service bookings for a user
+async function deleteServiceBookings(userId: string) {
+  return retryOperation(() =>
+    supabase
+      .from('service_bookings')
+      .delete()
+      .eq('user_id', userId)
+  );
+}
+
+// Delete service preferences for a user
+async function deleteServicePreferences(userId: string) {
+  return retryOperation(() =>
+    supabase
+      .from('service_preferences')
+      .delete()
+      .eq('user_id', userId)
+  );
+}
+
+// Delete properties for a user
+async function deleteProperties(userId: string) {
+  return retryOperation(() =>
+    supabase
+      .from('properties')
+      .delete()
+      .eq('user_id', userId)
+  );
+}
+
+// Delete user profile
+async function deleteProfile(userId: string) {
+  return retryOperation(() =>
+    supabase
+      .from('profiles')
+      .delete()
+      .eq('id', userId)
+  );
+}
+
+// Main cleanup function
+export async function cleanupUserData(userId: string) {
+  if (!userId) return;
+
   try {
-    // Delete booking_addons first (they reference booking_rooms)
-    await retry(async () => {
-      const { data: bookings } = await supabase
+    // Get all bookings for the user
+    const { data: bookings } = await retryOperation(() =>
+      supabase
         .from('service_bookings')
         .select('id')
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+    );
 
-      if (bookings) {
-        for (const booking of bookings) {
-          const { data: rooms } = await supabase
+    if (bookings) {
+      // Delete all booking related data
+      for (const booking of bookings) {
+        const { data: rooms } = await retryOperation(() =>
+          supabase
             .from('booking_rooms')
             .select('id')
-            .eq('booking_id', booking.id);
-            
-          if (rooms) {
-            for (const room of rooms) {
-              await supabase
-                .from('booking_addons')
-                .delete()
-                .eq('booking_room_id', room.id);
-            }
+            .eq('booking_id', booking.id)
+        );
+
+        if (rooms) {
+          for (const room of rooms) {
+            await deleteBookingAddons(room.id);
           }
         }
+
+        await deleteBookingRooms(booking.id);
       }
-    });
+    }
 
-    // Delete booking_rooms
-    await retry(async () => {
-      const { data: bookings } = await supabase
-        .from('service_bookings')
-        .select('id')
-        .eq('user_id', userId);
+    // Delete user data in correct order
+    await deleteServiceBookings(userId);
+    await deleteServicePreferences(userId);
+    await deleteProperties(userId);
+    await deleteProfile(userId);
 
-      if (bookings) {
-        for (const booking of bookings) {
-          await supabase
-            .from('booking_rooms')
-            .delete()
-            .eq('booking_id', booking.id);
-        }
-      }
-    });
-
-    // Delete service_bookings
-    await retry(async () => {
-      await supabase
-        .from('service_bookings')
-        .delete()
-        .eq('user_id', userId);
-    });
-
-    // Delete service preferences
-    await retry(async () => {
-      await supabase
-        .from('service_preferences')
-        .delete()
-        .eq('user_id', userId);
-    });
-
-    // Delete properties
-    await retry(async () => {
-      await supabase
-        .from('properties')
-        .delete()
-        .eq('user_id', userId);
-    });
-
-    // Delete user profile
-    await retry(async () => {
-      await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', userId);
-    });
-
-    // Sign out
-    await supabase.auth.signOut();
-    
   } catch (error) {
     console.error('Preview cleanup error:', error);
-    // Ensure we at least sign out the user even if cleanup fails
-    await supabase.auth.signOut();
   }
-};
+}
