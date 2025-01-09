@@ -18,25 +18,17 @@ const Navigation = () => {
 
     checkAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setIsAuthenticated(!!session);
-    });
-
-    // PREVIEW ONLY - Remove this effect before production deployment
-    const handleCleanup = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user?.id) {
-        // Add a small delay to ensure the request completes
-        await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // PREVIEW ONLY - Handle cleanup on sign out
+      if (event === 'SIGNED_OUT' && session?.user?.id) {
         await cleanupUserData(session.user.id);
       }
-    };
-
-    window.addEventListener('beforeunload', handleCleanup);
+    });
 
     return () => {
       subscription.unsubscribe();
-      window.removeEventListener('beforeunload', handleCleanup);
     };
   }, []);
 
