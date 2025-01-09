@@ -16,6 +16,7 @@ import { ServiceBookingModal } from "./ServiceBookingModal";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { CalendarDays, Clock, Home } from "lucide-react";
 
 interface UpcomingServiceCardProps {
   booking: {
@@ -73,53 +74,66 @@ export const UpcomingServiceCard = ({ booking }: UpcomingServiceCardProps) => {
   };
 
   return (
-    <Card className="mb-4">
-      <CardHeader>
-        <CardTitle className="text-lg font-semibold">
-          {format(new Date(booking.booking_date), "MMMM do, yyyy")} at{" "}
+    <Card className="mb-4 border border-purple-secondary/20 hover:border-purple-primary/30 transition-all duration-300">
+      <CardHeader className="bg-purple-secondary/10 dark:bg-purple-dark/40 rounded-t-lg pb-4">
+        <CardTitle className="text-lg font-semibold flex items-center gap-2 text-purple-primary">
+          <CalendarDays className="h-5 w-5" />
+          {format(new Date(booking.booking_date), "MMMM do, yyyy")}
+          <span className="mx-2">•</span>
+          <Clock className="h-5 w-5" />
           {timeSlotMap[booking.time_slot as keyof typeof timeSlotMap]}
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-4">
         <div className="space-y-4">
-          <div>
-            <h4 className="font-medium mb-2">Rooms:</h4>
-            {booking.rooms.map((room) => (
-              <div key={room.id} className="ml-4 mb-2">
-                <p>
-                  {room.type} {room.quantity && room.quantity > 1 ? `(${room.quantity}x)` : ''} -{" "}
-                  {room.serviceType === "deep" ? "Deep Clean" : "Standard Clean"}
-                </p>
-                {room.addons.length > 0 && (
-                  <div className="ml-4 text-sm text-muted-foreground">
-                    <p>Add-ons:</p>
-                    <ul className="list-disc list-inside">
-                      {room.addons.map((addon) => (
-                        <li key={addon}>{addon}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            ))}
+          <div className="bg-purple-secondary/5 dark:bg-purple-dark/20 rounded-lg p-4">
+            <h4 className="font-medium mb-3 flex items-center gap-2 text-purple-primary">
+              <Home className="h-5 w-5" />
+              Rooms and Services
+            </h4>
+            <div className="space-y-3">
+              {booking.rooms.map((room) => (
+                <div key={room.id} className="ml-4">
+                  <p className="text-purple-dark/90 dark:text-purple-secondary/90 font-medium">
+                    {room.type} {room.quantity && room.quantity > 1 ? `(${room.quantity}x)` : ''} -{" "}
+                    <span className="text-purple-primary">
+                      {room.serviceType === "deep" ? "Deep Clean" : "Standard Clean"}
+                    </span>
+                  </p>
+                  {room.addons.length > 0 && (
+                    <div className="ml-4 mt-2">
+                      <p className="text-sm text-purple-dark/70 dark:text-purple-secondary/70">Add-ons:</p>
+                      <ul className="list-disc list-inside text-sm text-purple-dark/60 dark:text-purple-secondary/60">
+                        {room.addons.map((addon) => (
+                          <li key={addon}>{addon}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
-          <div>
-            <p className="font-medium">Total Price: ${booking.total_price}</p>
-          </div>
-          <div className="flex gap-4">
-            <Button
-              variant="default"
-              className="bg-purple-primary hover:bg-purple-600"
-              onClick={() => setShowEditModal(true)}
-            >
-              Make Changes
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => setShowCancelDialog(true)}
-            >
-              Cancel Service
-            </Button>
+          <div className="flex justify-between items-center border-t border-purple-secondary/20 pt-4">
+            <p className="font-medium text-lg text-purple-primary">
+              Total: ${booking.total_price}
+            </p>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="border-purple-primary text-purple-primary hover:bg-purple-secondary/20"
+                onClick={() => setShowEditModal(true)}
+              >
+                Make Changes
+              </Button>
+              <Button
+                variant="destructive"
+                className="hover:bg-destructive/90"
+                onClick={() => setShowCancelDialog(true)}
+              >
+                Cancel Service
+              </Button>
+            </div>
           </div>
         </div>
       </CardContent>
