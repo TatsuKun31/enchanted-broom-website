@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { RoomSelection } from "./booking/RoomSelection";
 import { ServiceSelection } from "./booking/ServiceSelection";
@@ -50,6 +50,7 @@ export const ServiceBookingModal = ({ open, onOpenChange, existingBooking }: Ser
     return [];
   });
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: roomTypes } = useQuery({
     queryKey: ["roomTypes"],
@@ -62,8 +63,22 @@ export const ServiceBookingModal = ({ open, onOpenChange, existingBooking }: Ser
     },
   });
 
+  // Handle modal close
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen) {
+      // Reset the form state
+      setStep(1);
+      setSelectedRooms([]);
+      
+      // Invalidate relevant queries to trigger a refresh
+      queryClient.invalidateQueries({ queryKey: ["nextService"] });
+      queryClient.invalidateQueries({ queryKey: ["upcomingServices"] });
+    }
+    onOpenChange(newOpen);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-xl max-h-[80vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>
@@ -80,7 +95,7 @@ export const ServiceBookingModal = ({ open, onOpenChange, existingBooking }: Ser
             roomTypes={roomTypes}
             COUNTABLE_ROOMS={COUNTABLE_ROOMS}
             toast={toast}
-            onOpenChange={onOpenChange}
+            onOpenChange={handleOpenChange}
             existingBookingId={existingBooking?.id}
           />
         </div>
