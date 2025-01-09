@@ -48,12 +48,39 @@ export const UpcomingServiceCard = ({ booking }: UpcomingServiceCardProps) => {
 
   const handleCancelBooking = async () => {
     try {
-      const { error } = await supabase
+      // First, get all booking rooms
+      const { data: bookingRooms } = await supabase
+        .from("booking_rooms")
+        .select("id")
+        .eq("booking_id", booking.id);
+
+      if (bookingRooms) {
+        // Delete all addons for each booking room
+        for (const room of bookingRooms) {
+          const { error: addonsError } = await supabase
+            .from("booking_addons")
+            .delete()
+            .eq("booking_room_id", room.id);
+
+          if (addonsError) throw addonsError;
+        }
+
+        // Delete all booking rooms
+        const { error: roomsError } = await supabase
+          .from("booking_rooms")
+          .delete()
+          .eq("booking_id", booking.id);
+
+        if (roomsError) throw roomsError;
+      }
+
+      // Finally, delete the service booking
+      const { error: bookingError } = await supabase
         .from("service_bookings")
         .delete()
         .eq("id", booking.id);
 
-      if (error) throw error;
+      if (bookingError) throw bookingError;
 
       toast({
         title: "Service Cancelled",
