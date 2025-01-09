@@ -6,6 +6,7 @@ import { DashboardHeader } from "./DashboardHeader";
 import { DashboardStats } from "./DashboardStats";
 import { DashboardTabs } from "./DashboardTabs";
 import { format } from "date-fns";
+import { useQuery } from "@tanstack/react-query";
 
 interface DashboardViewProps {
   userData: {
@@ -18,8 +19,8 @@ interface DashboardViewProps {
 
 export const DashboardView = ({ userData }: DashboardViewProps) => {
   const navigate = useNavigate();
-  const [nextService, setNextService] = useState<string>();
 
+  // Check authentication status
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -27,10 +28,15 @@ export const DashboardView = ({ userData }: DashboardViewProps) => {
         navigate("/auth");
       }
     };
+    checkAuth();
+  }, [navigate]);
 
-    const fetchNextService = async () => {
+  // Fetch next service using React Query
+  const { data: nextService } = useQuery({
+    queryKey: ['nextService'],
+    queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) return undefined;
 
       const { data: bookings, error } = await supabase
         .from("service_bookings")
@@ -44,7 +50,7 @@ export const DashboardView = ({ userData }: DashboardViewProps) => {
 
       if (error) {
         console.error("Error fetching next service:", error);
-        return;
+        return undefined;
       }
 
       if (bookings) {
@@ -54,15 +60,13 @@ export const DashboardView = ({ userData }: DashboardViewProps) => {
           afternoon: "3:00 PM - 5:00 PM",
         };
         
-        setNextService(`${format(new Date(bookings.booking_date), 'MMMM do, yyyy')} at ${timeSlotMap[bookings.time_slot as keyof typeof timeSlotMap]}`);
-      } else {
-        setNextService(undefined);
+        return `${format(new Date(bookings.booking_date), 'MMMM do, yyyy')} at ${timeSlotMap[bookings.time_slot as keyof typeof timeSlotMap]}`;
       }
-    };
 
-    checkAuth();
-    fetchNextService();
-  }, [navigate]);
+      return undefined;
+    },
+    refetchInterval: 5000, // Refetch every 5 seconds
+  });
 
   const handleSignOut = async () => {
     try {
