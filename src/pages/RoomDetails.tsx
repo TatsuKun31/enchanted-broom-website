@@ -7,15 +7,23 @@ import { DashboardView } from "@/components/dashboard/DashboardView";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
 
 type OnboardingStep = "basic-info" | "property-details" | "service-preferences" | "completed";
 
+interface UserData {
+  name: string;
+  phone: string;
+  propertyType: string;
+  address: string;
+  frequency: string;
+  timePreference: string;
+}
+
 const RoomDetails = () => {
   const [currentStep, setCurrentStep] = useState<OnboardingStep>("basic-info");
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
-  const [userData, setUserData] = useState({
+  const [userData, setUserData] = useState<UserData>({
     name: "",
     phone: "",
     propertyType: "",
@@ -24,100 +32,104 @@ const RoomDetails = () => {
     timePreference: "",
   });
 
+  // Check authentication and fetch user data
+  const { data: sessionData } = useQuery({
+    queryKey: ['session'],
+    queryFn: async () => {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) throw error;
+      if (!session) {
+        navigate('/auth');
+        return null;
+      }
+      return session;
+    },
+  });
+
+  // Fetch user profile data
+  const { data: profileData, isLoading: isProfileLoading, error: profileError } = useQuery({
+    queryKey: ['profile', sessionData?.user?.id],
+    queryFn: async () => {
+      if (!sessionData?.user?.id) return null;
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', sessionData.user.id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!sessionData?.user?.id,
+  });
+
+  // Fetch property data
+  const { data: propertyData, isLoading: isPropertyLoading } = useQuery({
+    queryKey: ['property', sessionData?.user?.id],
+    queryFn: async () => {
+      if (!sessionData?.user?.id) return null;
+
+      const { data, error } = await supabase
+        .from('properties')
+        .select('*')
+        .eq('user_id', sessionData.user.id)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!sessionData?.user?.id,
+  });
+
+  // Fetch service preferences
+  const { data: preferencesData, isLoading: isPreferencesLoading } = useQuery({
+    queryKey: ['preferences', sessionData?.user?.id],
+    queryFn: async () => {
+      if (!sessionData?.user?.id) return null;
+
+      const { data, error } = await supabase
+        .from('service_preferences')
+        .select('*')
+        .eq('user_id', sessionData.user.id)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!sessionData?.user?.id,
+  });
+
   useEffect(() => {
-    const checkUserData = async () => {
-      try {
-        setError(null);
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (!session) {
-          navigate('/auth');
-          return;
-        }
+    if (profileError) {
+      console.error('Profile fetch error:', profileError);
+      toast.error("Error loading user data");
+    }
+  }, [profileError]);
 
-        // Check if user has completed profile
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .maybeSingle();
-
-        if (profileError) {
-          console.error('Profile fetch error:', profileError);
-          setError('Error fetching profile data');
-          return;
-        }
-
-        // Check if user has property details
-        const { data: property, error: propertyError } = await supabase
-          .from('properties')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
-
-        if (propertyError && propertyError.code !== 'PGRST116') {
-          console.error('Property fetch error:', propertyError);
-          setError('Error fetching property data');
-          return;
-        }
-
-        // Check if user has service preferences
-        const { data: preferences, error: preferencesError } = await supabase
-          .from('service_preferences')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
-
-        if (preferencesError && preferencesError.code !== 'PGRST116') {
-          console.error('Preferences fetch error:', preferencesError);
-          setError('Error fetching preferences data');
-          return;
-        }
-
-        // If user has all required data, skip onboarding
-        if (profile?.name && property?.property_type && preferences?.frequency) {
-          setUserData({
-            name: profile.name || "",
-            phone: profile.phone || "",
-            propertyType: property.property_type || "",
-            address: property.address || "",
-            frequency: preferences.frequency || "",
-            timePreference: preferences.time_preference || "",
-          });
-          setCurrentStep("completed");
+  useEffect(() => {
+    if (!isProfileLoading && !isPropertyLoading && !isPreferencesLoading) {
+      if (profileData?.name && propertyData?.property_type && preferencesData?.frequency) {
+        setUserData({
+          name: profileData.name || "",
+          phone: profileData.phone || "",
+          propertyType: propertyData.property_type || "",
+          address: propertyData.address || "",
+          frequency: preferencesData.frequency || "",
+          timePreference: preferencesData.time_preference || "",
+        });
+        setCurrentStep("completed");
+      } else {
+        if (!profileData?.name) {
+          setCurrentStep("basic-info");
+        } else if (!propertyData?.property_type) {
+          setCurrentStep("property-details");
         } else {
-          // Start from the appropriate step based on what data is missing
-          if (!profile?.name) {
-            setCurrentStep("basic-info");
-          } else if (!property?.property_type) {
-            setCurrentStep("property-details");
-          } else {
-            setCurrentStep("service-preferences");
-          }
+          setCurrentStep("service-preferences");
         }
-      } catch (error) {
-        console.error('Error checking user data:', error);
-        setError('An unexpected error occurred');
-        toast.error("Error loading user data");
-      } finally {
-        setIsLoading(false);
       }
-    };
-
-    checkUserData();
-
-    // Set up auth state change listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_OUT') {
-        setIsLoading(false);
-        navigate('/');
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [navigate]);
+    }
+  }, [profileData, propertyData, preferencesData, isProfileLoading, isPropertyLoading, isPreferencesLoading]);
 
   const handleBasicInfoNext = (data: { name: string; phone: string }) => {
     setUserData((prev) => ({ ...prev, ...data }));
@@ -134,31 +146,12 @@ const RoomDetails = () => {
     setCurrentStep("completed");
   };
 
-  if (isLoading) {
+  if (isProfileLoading || isPropertyLoading || isPreferencesLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white dark:from-purple-dark/20 dark:to-purple-dark/40">
         <Navigation />
         <div className="flex items-center justify-center min-h-screen">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-primary"></div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white dark:from-purple-dark/20 dark:to-purple-dark/40">
-        <Navigation />
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center space-y-4">
-            <p className="text-red-500">{error}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="text-purple-primary hover:text-purple-primary/80"
-            >
-              Try again
-            </button>
-          </div>
         </div>
       </div>
     );
