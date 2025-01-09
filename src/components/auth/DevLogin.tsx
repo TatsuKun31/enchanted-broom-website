@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { AuthError } from "@supabase/supabase-js";
 
 export const DevLogin = () => {
   const navigate = useNavigate();
@@ -9,26 +10,32 @@ export const DevLogin = () => {
 
   const handleDevLogin = async () => {
     try {
-      // First try to create the test account if it doesn't exist
-      const { error: signUpError } = await supabase.auth.signUp({
-        email: 'test@example.com',
-        password: 'testpassword123'
-      });
-
-      if (signUpError) {
-        if (signUpError.message.includes('email_provider_disabled')) {
-          toast.error("Email authentication is disabled. Please enable it in Supabase settings.");
-          return;
-        }
-      }
-
-      // Attempt to sign in regardless of whether sign up succeeded
+      // Try to sign in first
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: 'test@example.com',
         password: 'testpassword123'
       });
 
-      if (signInError) {
+      // If sign in fails with invalid_credentials, try to sign up
+      if (signInError && signInError.message.includes('Invalid login credentials')) {
+        const { error: signUpError } = await supabase.auth.signUp({
+          email: 'test@example.com',
+          password: 'testpassword123'
+        });
+
+        if (signUpError) {
+          // Handle specific signup errors
+          if (signUpError.message.includes('User already registered')) {
+            toast.error("Test user exists but credentials might be wrong. Please check Supabase settings.");
+          } else if (signUpError.message.includes('email_provider_disabled')) {
+            toast.error("Email authentication is disabled. Please enable it in Supabase settings.");
+          } else {
+            throw signUpError;
+          }
+          return;
+        }
+      } else if (signInError) {
+        // Handle other sign in errors
         if (signInError.message.includes('email_provider_disabled')) {
           toast.error("Email authentication is disabled. Please enable it in Supabase settings.");
           return;
@@ -38,7 +45,11 @@ export const DevLogin = () => {
       
       navigate("/room-details");
     } catch (error) {
-      toast.error("Dev login failed. Please try again.");
+      if (error instanceof AuthError) {
+        toast.error(error.message);
+      } else {
+        toast.error("Dev login failed. Please try again.");
+      }
       console.error("Dev login error:", error);
     }
   };
