@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Menu, X, LayoutDashboard } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { cleanupUserData } from "@/utils/previewCleanup";
 
@@ -9,6 +9,7 @@ const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     let mounted = true;
@@ -18,9 +19,6 @@ const Navigation = () => {
         const { data: { session } } = await supabase.auth.getSession();
         if (mounted) {
           setIsAuthenticated(!!session);
-          if (!session) {
-            navigate('/auth');
-          }
         }
       } catch (error) {
         console.error('Auth check error:', error);
@@ -39,7 +37,6 @@ const Navigation = () => {
             navigate('/auth');
           } catch (error) {
             console.error('Cleanup error:', error);
-            // Force navigation even if cleanup fails
             navigate('/auth');
           }
         }
@@ -63,17 +60,45 @@ const Navigation = () => {
     navigate('/room-details');
   };
 
+  const scrollToSection = (sectionId: string) => {
+    if (location.pathname !== '/') {
+      navigate('/#' + sectionId);
+      return;
+    }
+    
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+      setIsOpen(false); // Close mobile menu after clicking
+    }
+  };
+
   return (
     <nav className="fixed w-full bg-white/90 dark:bg-purple-dark/90 backdrop-blur-sm z-50 shadow-sm">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center h-16">
-          <div className="text-2xl font-bold text-purple-primary">CleanCo</div>
+          <div 
+            className="text-2xl font-bold text-purple-primary cursor-pointer" 
+            onClick={() => navigate('/')}
+          >
+            CleanCo
+          </div>
           
           <div className="flex items-center gap-4">
             {/* Desktop menu */}
             <div className="hidden md:flex items-center space-x-8">
-              <a href="#services" className="text-purple-dark dark:text-white/90 hover:text-purple-primary transition-colors">Services</a>
-              <a href="#why-us" className="text-purple-dark dark:text-white/90 hover:text-purple-primary transition-colors">Why Us</a>
+              <button 
+                onClick={() => scrollToSection('services')} 
+                className="text-purple-dark dark:text-white/90 hover:text-purple-primary transition-colors"
+              >
+                Services
+              </button>
+              <button 
+                onClick={() => scrollToSection('why-us')} 
+                className="text-purple-dark dark:text-white/90 hover:text-purple-primary transition-colors"
+              >
+                Why Us
+              </button>
               {isAuthenticated ? (
                 <button 
                   onClick={handleDashboard}
@@ -108,8 +133,18 @@ const Navigation = () => {
         {isOpen && (
           <div className="md:hidden py-4 animate-fade-in">
             <div className="flex flex-col space-y-4">
-              <a href="#services" className="text-purple-dark dark:text-white/90 hover:text-purple-primary transition-colors">Services</a>
-              <a href="#why-us" className="text-purple-dark dark:text-white/90 hover:text-purple-primary transition-colors">Why Us</a>
+              <button 
+                onClick={() => scrollToSection('services')}
+                className="text-purple-dark dark:text-white/90 hover:text-purple-primary transition-colors text-left"
+              >
+                Services
+              </button>
+              <button 
+                onClick={() => scrollToSection('why-us')}
+                className="text-purple-dark dark:text-white/90 hover:text-purple-primary transition-colors text-left"
+              >
+                Why Us
+              </button>
               {isAuthenticated ? (
                 <button 
                   onClick={handleDashboard}
@@ -121,7 +156,7 @@ const Navigation = () => {
               ) : (
                 <button 
                   onClick={handleBookNow}
-                  className="bg-purple-primary hover:bg-purple-primary/90 text-white px-6 py-2 rounded-lg transition-all duration-300 w-full"
+                  className="bg-purple-primary hover:bg-purple-primary/90 text-white px-6 py-2 rounded-lg transition-all duration-300 w-full text-left"
                 >
                   Book Now
                 </button>
