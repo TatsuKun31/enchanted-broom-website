@@ -16,12 +16,18 @@ const Navigation = () => {
 
     const checkAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Session error:', error);
+          setIsAuthenticated(false);
+          return;
+        }
         if (mounted) {
           setIsAuthenticated(!!session);
         }
       } catch (error) {
         console.error('Auth check error:', error);
+        setIsAuthenticated(false);
       }
     };
 
@@ -34,11 +40,17 @@ const Navigation = () => {
             if (session?.user?.id) {
               await cleanupUserData(session.user.id);
             }
-            navigate('/auth');
           } catch (error) {
             console.error('Cleanup error:', error);
+          } finally {
+            // Always navigate to auth page after sign out
             navigate('/auth');
           }
+        } else if (event === 'TOKEN_REFRESHED') {
+          // Handle successful token refresh
+          setIsAuthenticated(true);
+        } else if (event === 'USER_UPDATED') {
+          setIsAuthenticated(!!session);
         }
       }
     });
