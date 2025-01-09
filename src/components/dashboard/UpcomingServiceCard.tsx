@@ -2,11 +2,23 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { ServiceBookingModal } from "./ServiceBookingModal";
 import { useQueryClient } from "@tanstack/react-query";
 import { CalendarDays, Clock } from "lucide-react";
 import { BookingDetails } from "./booking/BookingDetails";
 import { Room } from "./booking/types";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface UpcomingServiceCardProps {
   booking: {
@@ -25,6 +37,7 @@ interface UpcomingServiceCardProps {
 }
 
 export const UpcomingServiceCard = ({ booking }: UpcomingServiceCardProps) => {
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const queryClient = useQueryClient();
 
@@ -32,6 +45,30 @@ export const UpcomingServiceCard = ({ booking }: UpcomingServiceCardProps) => {
     morning: "9:00 AM - 11:00 AM",
     midday: "12:00 PM - 2:00 PM",
     afternoon: "3:00 PM - 5:00 PM",
+  };
+
+  const handleCancelBooking = async () => {
+    try {
+      const { error } = await supabase
+        .from('service_bookings')
+        .delete()
+        .eq('id', booking.id);
+
+      if (error) throw error;
+
+      // Close the dialog
+      setShowCancelDialog(false);
+
+      // Show success message
+      toast.success("Service cancelled successfully");
+
+      // Invalidate and refetch queries
+      queryClient.invalidateQueries({ queryKey: ["upcomingServices"] });
+      queryClient.invalidateQueries({ queryKey: ["nextService"] });
+    } catch (error) {
+      console.error('Error cancelling service:', error);
+      toast.error("Failed to cancel service. Please try again.");
+    }
   };
 
   // Transform the rooms data to match the Room type
@@ -66,14 +103,44 @@ export const UpcomingServiceCard = ({ booking }: UpcomingServiceCardProps) => {
         <p className="font-medium text-lg text-purple-primary">
           Total: ${booking.total_price}
         </p>
-        <Button
-          variant="outline"
-          className="border-purple-primary text-purple-primary hover:bg-purple-secondary/20"
-          onClick={() => setShowEditModal(true)}
-        >
-          Make Changes
-        </Button>
+        <div className="flex gap-3">
+          <Button
+            variant="outline"
+            className="border-purple-primary text-purple-primary hover:bg-purple-secondary/20"
+            onClick={() => setShowEditModal(true)}
+          >
+            Make Changes
+          </Button>
+          <Button
+            variant="destructive"
+            className="hover:bg-destructive/90"
+            onClick={() => setShowCancelDialog(true)}
+          >
+            Cancel Service
+          </Button>
+        </div>
       </div>
+
+      <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel Service</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to cancel this service? This action cannot be
+              undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>No, keep it</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleCancelBooking}
+            >
+              Yes, cancel service
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <ServiceBookingModal
         open={showEditModal}
