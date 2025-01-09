@@ -40,9 +40,14 @@ export const DashboardView = ({ userData }: DashboardViewProps) => {
         .gte("booking_date", new Date().toISOString().split('T')[0])
         .order("booking_date", { ascending: true })
         .limit(1)
-        .single();
+        .maybeSingle();
 
-      if (bookings && !error) {
+      if (error) {
+        console.error("Error fetching next service:", error);
+        return;
+      }
+
+      if (bookings) {
         const timeSlotMap = {
           morning: "9:00 AM - 11:00 AM",
           midday: "12:00 PM - 2:00 PM",
@@ -50,6 +55,8 @@ export const DashboardView = ({ userData }: DashboardViewProps) => {
         };
         
         setNextService(`${format(new Date(bookings.booking_date), 'MMMM do, yyyy')} at ${timeSlotMap[bookings.time_slot as keyof typeof timeSlotMap]}`);
+      } else {
+        setNextService(undefined);
       }
     };
 
