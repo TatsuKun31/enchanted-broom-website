@@ -1,4 +1,4 @@
-import { createClient, AuthChangeEvent } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 import { toast } from "sonner";
 
@@ -25,23 +25,23 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
 
 // Add error handling for auth state changes
 supabase.auth.onAuthStateChange((event, session) => {
-  if (event === AuthChangeEvent.SIGNED_OUT) {
+  if (event === 'SIGNED_OUT') {
     // Clear any cached data
     localStorage.removeItem('supabase.auth.token');
     toast.error("You have been signed out");
   }
   
-  if (event === AuthChangeEvent.TOKEN_REFRESHED) {
+  if (event === 'TOKEN_REFRESHED') {
     console.log('Token has been refreshed');
   }
 
-  if (event === AuthChangeEvent.SIGNED_IN) {
+  if (event === 'SIGNED_IN') {
     console.log('User signed in:', session?.user?.id);
     toast.success("Successfully signed in");
   }
 
   // Handle auth errors
-  if (event === AuthChangeEvent.USER_DELETED || event === AuthChangeEvent.USER_UPDATED) {
+  if (event === 'USER_DELETED' || event === 'USER_UPDATED') {
     console.log('User profile changed, refreshing session');
     supabase.auth.refreshSession();
   }
@@ -52,7 +52,7 @@ const maxRetries = 3;
 let currentRetry = 0;
 
 supabase.auth.onAuthStateChange(async (event, session) => {
-  if (event === AuthChangeEvent.SIGNED_IN && !session) {
+  if (event === 'SIGNED_IN' && !session) {
     if (currentRetry < maxRetries) {
       currentRetry++;
       console.log(`Retrying auth check (${currentRetry}/${maxRetries})`);
