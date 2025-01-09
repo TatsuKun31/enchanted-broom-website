@@ -11,7 +11,8 @@ export const cancelBooking = async (
     const { data: bookingRooms, error: roomsQueryError } = await supabase
       .from("booking_rooms")
       .select("id")
-      .eq("booking_id", bookingId);
+      .eq("booking_id", bookingId)
+      .throwOnError();
 
     if (roomsQueryError) throw roomsQueryError;
 
@@ -21,7 +22,8 @@ export const cancelBooking = async (
         const { error: addonsError } = await supabase
           .from("booking_addons")
           .delete()
-          .eq("booking_room_id", room.id);
+          .eq("booking_room_id", room.id)
+          .throwOnError();
 
         if (addonsError) throw addonsError;
       }
@@ -30,7 +32,8 @@ export const cancelBooking = async (
       const { error: roomsError } = await supabase
         .from("booking_rooms")
         .delete()
-        .eq("booking_id", bookingId);
+        .eq("booking_id", bookingId)
+        .throwOnError();
 
       if (roomsError) throw roomsError;
     }
@@ -39,7 +42,8 @@ export const cancelBooking = async (
     const { error: bookingError } = await supabase
       .from("service_bookings")
       .delete()
-      .eq("id", bookingId);
+      .eq("id", bookingId)
+      .throwOnError();
 
     if (bookingError) throw bookingError;
 
