@@ -31,7 +31,7 @@ export const DashboardView = ({ userData }: DashboardViewProps) => {
     checkAuth();
   }, [navigate]);
 
-  // Fetch next service using React Query
+  // Fetch next service using React Query with staleTime set to 0 to ensure fresh data
   const { data: nextService } = useQuery({
     queryKey: ['nextService'],
     queryFn: async () => {
@@ -65,7 +65,9 @@ export const DashboardView = ({ userData }: DashboardViewProps) => {
 
       return undefined;
     },
-    refetchInterval: 5000, // Refetch every 5 seconds
+    staleTime: 0, // This ensures we always fetch fresh data
+    refetchOnMount: true, // This ensures we refetch when the component mounts
+    refetchOnWindowFocus: true, // This ensures we refetch when the window regains focus
   });
 
   const handleSignOut = async () => {

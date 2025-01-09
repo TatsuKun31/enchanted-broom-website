@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { PostgrestResponse, PostgrestSingleResponse } from "@supabase/supabase-js";
+import { PostgrestResponse } from "@supabase/supabase-js";
 
 // Utility function for delayed retry
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -28,52 +28,86 @@ async function retryOperation<T>(
   throw lastError;
 }
 
-// Delete booking addons for a specific booking
+// Delete booking addons for a specific booking room
 async function deleteBookingAddons(bookingRoomId: string) {
-  return await supabase
-    .from('booking_addons')
-    .delete()
-    .eq('booking_room_id', bookingRoomId);
+  return await retryOperation(() =>
+    supabase
+      .from('booking_addons')
+      .delete()
+      .eq('booking_room_id', bookingRoomId)
+  );
 }
 
 // Delete booking rooms for a specific booking
 async function deleteBookingRooms(bookingId: string) {
-  return await supabase
+  const { data: rooms } = await supabase
     .from('booking_rooms')
-    .delete()
+    .select('id')
     .eq('booking_id', bookingId);
+
+  if (rooms) {
+    for (const room of rooms) {
+      await deleteBookingAddons(room.id);
+    }
+  }
+
+  return await retryOperation(() =>
+    supabase
+      .from('booking_rooms')
+      .delete()
+      .eq('booking_id', bookingId)
+  );
 }
 
-// Delete service bookings for a user
+// Delete all service bookings for a user
 async function deleteServiceBookings(userId: string) {
-  return await supabase
+  const { data: bookings } = await supabase
     .from('service_bookings')
-    .delete()
+    .select('id')
     .eq('user_id', userId);
+
+  if (bookings) {
+    for (const booking of bookings) {
+      await deleteBookingRooms(booking.id);
+    }
+  }
+
+  return await retryOperation(() =>
+    supabase
+      .from('service_bookings')
+      .delete()
+      .eq('user_id', userId)
+  );
 }
 
 // Delete service preferences for a user
 async function deleteServicePreferences(userId: string) {
-  return await supabase
-    .from('service_preferences')
-    .delete()
-    .eq('user_id', userId);
+  return await retryOperation(() =>
+    supabase
+      .from('service_preferences')
+      .delete()
+      .eq('user_id', userId)
+  );
 }
 
 // Delete properties for a user
 async function deleteProperties(userId: string) {
-  return await supabase
-    .from('properties')
-    .delete()
-    .eq('user_id', userId);
+  return await retryOperation(() =>
+    supabase
+      .from('properties')
+      .delete()
+      .eq('user_id', userId)
+  );
 }
 
 // Delete user profile
 async function deleteProfile(userId: string) {
-  return await supabase
-    .from('profiles')
-    .delete()
-    .eq('id', userId);
+  return await retryOperation(() =>
+    supabase
+      .from('profiles')
+      .delete()
+      .eq('id', userId)
+  );
 }
 
 // Sign out user completely
@@ -105,31 +139,7 @@ export async function cleanupUserData(userId: string) {
   if (!userId) return;
 
   try {
-    // Get all bookings for the user
-    const { data: bookings } = await supabase
-      .from('service_bookings')
-      .select('id')
-      .eq('user_id', userId);
-
-    if (bookings) {
-      // Delete all booking related data
-      for (const booking of bookings) {
-        const { data: rooms } = await supabase
-          .from('booking_rooms')
-          .select('id')
-          .eq('booking_id', booking.id);
-
-        if (rooms) {
-          for (const room of rooms) {
-            await deleteBookingAddons(room.id);
-          }
-        }
-
-        await deleteBookingRooms(booking.id);
-      }
-    }
-
-    // Delete user data in correct order
+    // Delete in correct order to respect foreign key constraints
     await deleteServiceBookings(userId);
     await deleteServicePreferences(userId);
     await deleteProperties(userId);
