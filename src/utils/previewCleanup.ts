@@ -41,30 +41,39 @@ async function verifyNoBookings(userId: string): Promise<boolean> {
       return false;
     }
 
-    // Check for any remaining booking rooms
-    const { data: rooms, error: roomsError } = await supabase
-      .from('booking_rooms')
-      .select('id')
-      .eq('booking_id', bookings?.map(b => b.id) || []);
+    if (bookings && bookings.length > 0) {
+      // Check for any remaining booking rooms
+      const { data: rooms, error: roomsError } = await supabase
+        .from('booking_rooms')
+        .select('id')
+        .in('booking_id', bookings.map(b => b.id));
 
-    if (roomsError) {
-      console.error('Error verifying rooms cleanup:', roomsError);
-      return false;
+      if (roomsError) {
+        console.error('Error verifying rooms cleanup:', roomsError);
+        return false;
+      }
+
+      if (rooms && rooms.length > 0) {
+        // Check for any remaining addons
+        const { data: addons, error: addonsError } = await supabase
+          .from('booking_addons')
+          .select('id')
+          .in('booking_room_id', rooms.map(r => r.id));
+
+        if (addonsError) {
+          console.error('Error verifying addons cleanup:', addonsError);
+          return false;
+        }
+
+        // If we found any addons, cleanup is not complete
+        if (addons && addons.length > 0) {
+          return false;
+        }
+      }
     }
 
-    // Check for any remaining addons
-    const { data: addons, error: addonsError } = await supabase
-      .from('booking_addons')
-      .select('id')
-      .eq('booking_room_id', rooms?.map(r => r.id) || []);
-
-    if (addonsError) {
-      console.error('Error verifying addons cleanup:', addonsError);
-      return false;
-    }
-
-    // Return true only if no bookings, rooms, or addons were found
-    return !bookings?.length && !rooms?.length && !addons?.length;
+    // Return true only if no bookings were found
+    return !bookings?.length;
   } catch (error) {
     console.error('Verification error:', error);
     return false;
