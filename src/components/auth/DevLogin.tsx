@@ -18,18 +18,26 @@ export const DevLogin = () => {
   }, []);
 
   const checkUserExists = async (email: string) => {
-    const { data, error } = await supabase.auth.admin.listUsers({
-      filters: {
-        email: email
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: 'wrong-password-to-check-existence'
+      });
+
+      if (error) {
+        // If we get "Invalid login credentials", the user exists
+        // If we get "Email not confirmed", the user exists
+        // If we get any other error, the user doesn't exist
+        return error.message.includes('Invalid login credentials') || 
+               error.message.includes('Email not confirmed');
       }
-    });
-    
-    if (error) {
+
+      // If no error, user exists and somehow the password worked (shouldn't happen)
+      return true;
+    } catch (error) {
       console.error("Error checking user existence:", error);
       return false;
     }
-    
-    return data?.users?.length > 0;
   };
 
   const findNextAvailableEmail = async (startNumber: number): Promise<{ email: string; number: number }> => {
