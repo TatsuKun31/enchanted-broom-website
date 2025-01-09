@@ -49,10 +49,12 @@ export const UpcomingServiceCard = ({ booking }: UpcomingServiceCardProps) => {
   const handleCancelBooking = async () => {
     try {
       // First, get all booking rooms
-      const { data: bookingRooms } = await supabase
+      const { data: bookingRooms, error: roomsQueryError } = await supabase
         .from("booking_rooms")
         .select("id")
         .eq("booking_id", booking.id);
+
+      if (roomsQueryError) throw roomsQueryError;
 
       if (bookingRooms) {
         // Delete all addons for each booking room
