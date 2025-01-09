@@ -62,9 +62,14 @@ export const UpcomingServiceCard = ({ booking }: UpcomingServiceCardProps) => {
       // Show success message
       toast.success("Service cancelled successfully");
 
-      // Invalidate and refetch queries
-      queryClient.invalidateQueries({ queryKey: ["upcomingServices"] });
-      queryClient.invalidateQueries({ queryKey: ["nextService"] });
+      // Invalidate and refetch all relevant queries
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["upcomingServices"] }),
+        queryClient.invalidateQueries({ queryKey: ["nextService"] }),
+        // Force refetch to ensure immediate UI update
+        queryClient.refetchQueries({ queryKey: ["nextService"], type: 'active' })
+      ]);
+
     } catch (error) {
       console.error('Error cancelling service:', error);
       toast.error("Failed to cancel service. Please try again.");
