@@ -8,40 +8,37 @@ export const cancelBooking = async (
 ) => {
   try {
     // First, get all booking rooms for this booking
-    const { data: bookingRooms, error: roomsQueryError } = await supabase
+    const { data: bookingRooms } = await supabase
       .from("booking_rooms")
       .select("id")
       .eq("booking_id", bookingId);
 
-    if (roomsQueryError) {
-      console.error("Error fetching booking rooms:", roomsQueryError);
-      throw roomsQueryError;
+    if (!bookingRooms) {
+      throw new Error("Could not fetch booking rooms");
     }
 
-    // Delete all addons for each booking room sequentially
-    if (bookingRooms && bookingRooms.length > 0) {
-      for (const room of bookingRooms) {
-        const { error: addonsError } = await supabase
-          .from("booking_addons")
-          .delete()
-          .eq("booking_room_id", room.id);
-
-        if (addonsError) {
-          console.error("Error deleting booking addons:", addonsError);
-          throw addonsError;
-        }
-      }
-
-      // After all addons are deleted, delete the booking rooms
-      const { error: roomsError } = await supabase
-        .from("booking_rooms")
+    // Delete all addons for each booking room one at a time
+    for (const room of bookingRooms) {
+      const { error: addonsError } = await supabase
+        .from("booking_addons")
         .delete()
-        .eq("booking_id", bookingId);
+        .eq("booking_room_id", room.id);
 
-      if (roomsError) {
-        console.error("Error deleting booking rooms:", roomsError);
-        throw roomsError;
+      if (addonsError) {
+        console.error("Error deleting booking addons:", addonsError);
+        throw addonsError;
       }
+    }
+
+    // After all addons are deleted, delete all booking rooms
+    const { error: roomsError } = await supabase
+      .from("booking_rooms")
+      .delete()
+      .eq("booking_id", bookingId);
+
+    if (roomsError) {
+      console.error("Error deleting booking rooms:", roomsError);
+      throw roomsError;
     }
 
     // Finally, delete the service booking
