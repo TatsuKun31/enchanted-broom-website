@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,10 +13,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ServiceBookingModal } from "./ServiceBookingModal";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { CalendarDays, Clock, Home } from "lucide-react";
+import { CalendarDays, Clock } from "lucide-react";
+import { BookingDetails } from "./booking/BookingDetails";
+import { cancelBooking } from "./booking/BookingCancellation";
 
 interface UpcomingServiceCardProps {
   booking: {
@@ -37,7 +37,6 @@ interface UpcomingServiceCardProps {
 export const UpcomingServiceCard = ({ booking }: UpcomingServiceCardProps) => {
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const timeSlotMap = {
@@ -48,65 +47,9 @@ export const UpcomingServiceCard = ({ booking }: UpcomingServiceCardProps) => {
 
   const handleCancelBooking = async () => {
     try {
-      // First, get all booking rooms
-      const { data: bookingRooms, error: roomsQueryError } = await supabase
-        .from("booking_rooms")
-        .select("id")
-        .eq("booking_id", booking.id);
-
-      if (roomsQueryError) {
-        throw roomsQueryError;
-      }
-
-      if (bookingRooms && bookingRooms.length > 0) {
-        // Delete all addons for each booking room
-        for (const room of bookingRooms) {
-          const { error: addonsError } = await supabase
-            .from("booking_addons")
-            .delete()
-            .eq("booking_room_id", room.id);
-
-          if (addonsError) {
-            throw addonsError;
-          }
-        }
-
-        // After all addons are deleted, delete all booking rooms
-        const { error: roomsError } = await supabase
-          .from("booking_rooms")
-          .delete()
-          .eq("booking_id", booking.id);
-
-        if (roomsError) {
-          throw roomsError;
-        }
-      }
-
-      // Finally, delete the service booking
-      const { error: bookingError } = await supabase
-        .from("service_bookings")
-        .delete()
-        .eq("id", booking.id);
-
-      if (bookingError) {
-        throw bookingError;
-      }
-
-      toast({
-        title: "Service Cancelled",
-        description: "Your service has been successfully cancelled.",
-      });
-
-      // Invalidate queries to refresh the data
-      queryClient.invalidateQueries({ queryKey: ["nextService"] });
-      queryClient.invalidateQueries({ queryKey: ["upcomingServices"] });
+      await cancelBooking(booking.id, queryClient);
     } catch (error) {
-      console.error("Error cancelling service:", error);
-      toast({
-        title: "Error",
-        description: "Failed to cancel service. Please try again.",
-        variant: "destructive",
-      });
+      // Error is already handled in cancelBooking
     }
     setShowCancelDialog(false);
   };
@@ -122,59 +65,35 @@ export const UpcomingServiceCard = ({ booking }: UpcomingServiceCardProps) => {
           {timeSlotMap[booking.time_slot as keyof typeof timeSlotMap]}
         </CardTitle>
       </CardHeader>
-      <CardContent className="pt-4">
-        <div className="space-y-4">
-          <div className="rounded-lg p-4">
-            <h4 className="font-medium mb-3 flex items-center gap-2 text-purple-primary">
-              <Home className="h-5 w-5" />
-              Rooms and Services
-            </h4>
-            <div className="space-y-3">
-              {booking.rooms.map((room) => (
-                <div key={room.id} className="ml-4">
-                  <p className="text-purple-dark/90 dark:text-purple-secondary/90 font-medium">
-                    {room.type} {room.quantity && room.quantity > 1 ? `(${room.quantity}x)` : ''} -{" "}
-                    <span className="text-purple-primary">
-                      {room.serviceType === "deep" ? "Deep Clean" : "Standard Clean"}
-                    </span>
-                  </p>
-                  {room.addons.length > 0 && (
-                    <div className="ml-4 mt-2">
-                      <p className="text-sm text-purple-dark/70 dark:text-purple-secondary/70">Add-ons:</p>
-                      <ul className="list-disc list-inside text-sm text-purple-dark/60 dark:text-purple-secondary/60">
-                        {room.addons.map((addon) => (
-                          <li key={addon}>{addon}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="flex justify-between items-center border-t border-purple-secondary/20 pt-4">
-            <p className="font-medium text-lg text-purple-primary">
-              Total: ${booking.total_price}
-            </p>
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                className="border-purple-primary text-purple-primary hover:bg-purple-secondary/20"
-                onClick={() => setShowEditModal(true)}
-              >
-                Make Changes
-              </Button>
-              <Button
-                variant="destructive"
-                className="hover:bg-destructive/90"
-                onClick={() => setShowCancelDialog(true)}
-              >
-                Cancel Service
-              </Button>
-            </div>
-          </div>
+
+      <BookingDetails
+        date={booking.booking_date}
+        timeSlot={booking.time_slot}
+        rooms={booking.rooms}
+        timeSlotMap={timeSlotMap}
+      />
+
+      <div className="flex justify-between items-center border-t border-purple-secondary/20 p-4">
+        <p className="font-medium text-lg text-purple-primary">
+          Total: ${booking.total_price}
+        </p>
+        <div className="flex gap-3">
+          <Button
+            variant="outline"
+            className="border-purple-primary text-purple-primary hover:bg-purple-secondary/20"
+            onClick={() => setShowEditModal(true)}
+          >
+            Make Changes
+          </Button>
+          <Button
+            variant="destructive"
+            className="hover:bg-destructive/90"
+            onClick={() => setShowCancelDialog(true)}
+          >
+            Cancel Service
+          </Button>
         </div>
-      </CardContent>
+      </div>
 
       <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
         <AlertDialogContent>
