@@ -5,10 +5,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Plus, Minus } from "lucide-react";
 
 interface Room {
   id: string;
   type: string;
+  quantity?: number;
   serviceType: "standard" | "deep";
   addons: string[];
 }
@@ -17,6 +19,14 @@ interface ServiceBookingModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
+
+const COUNTABLE_ROOMS = [
+  "Bathroom",
+  "Half Bath",
+  "Bedroom",
+  "Media Room",
+  "Home Office"
+];
 
 export const ServiceBookingModal = ({ open, onOpenChange }: ServiceBookingModalProps) => {
   const [step, setStep] = useState(1);
@@ -46,11 +56,39 @@ export const ServiceBookingModal = ({ open, onOpenChange }: ServiceBookingModalP
   });
 
   const handleRoomSelection = (roomType: string) => {
-    if (selectedRooms.find(room => room.type === roomType)) {
-      setSelectedRooms(selectedRooms.filter(room => room.type !== roomType));
+    if (COUNTABLE_ROOMS.includes(roomType)) {
+      if (!selectedRooms.find(room => room.type === roomType)) {
+        setSelectedRooms([...selectedRooms, { 
+          id: crypto.randomUUID(), 
+          type: roomType, 
+          quantity: 1,
+          serviceType: "standard", 
+          addons: [] 
+        }]);
+      }
     } else {
-      setSelectedRooms([...selectedRooms, { id: crypto.randomUUID(), type: roomType, serviceType: "standard", addons: [] }]);
+      if (selectedRooms.find(room => room.type === roomType)) {
+        setSelectedRooms(selectedRooms.filter(room => room.type !== roomType));
+      } else {
+        setSelectedRooms([...selectedRooms, { 
+          id: crypto.randomUUID(), 
+          type: roomType, 
+          serviceType: "standard", 
+          addons: [] 
+        }]);
+      }
     }
+  };
+
+  const handleQuantityChange = (roomId: string, change: number) => {
+    setSelectedRooms(selectedRooms.map(room => {
+      if (room.id === roomId) {
+        const newQuantity = (room.quantity || 1) + change;
+        if (newQuantity < 1) return room;
+        return { ...room, quantity: newQuantity };
+      }
+      return room;
+    }));
   };
 
   const handleServiceTypeChange = (roomId: string, serviceType: "standard" | "deep") => {
@@ -74,8 +112,9 @@ export const ServiceBookingModal = ({ open, onOpenChange }: ServiceBookingModalP
   const calculateTotal = () => {
     let total = 0;
     selectedRooms.forEach(room => {
-      total += room.serviceType === "deep" ? 100 : 50;
-      total += room.addons.length * 10;
+      const quantity = room.quantity || 1;
+      total += (room.serviceType === "deep" ? 100 : 50) * quantity;
+      total += room.addons.length * 10 * quantity;
     });
     return total;
   };
@@ -137,14 +176,43 @@ export const ServiceBookingModal = ({ open, onOpenChange }: ServiceBookingModalP
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               {roomTypes?.map((roomType) => (
-                <Button
-                  key={roomType.id}
-                  variant={selectedRooms.some(room => room.type === roomType.name) ? "default" : "outline"}
-                  onClick={() => handleRoomSelection(roomType.name)}
-                  className="w-full"
-                >
-                  {roomType.name}
-                </Button>
+                <div key={roomType.id} className="space-y-2">
+                  <Button
+                    variant={selectedRooms.some(room => room.type === roomType.name) ? "default" : "outline"}
+                    onClick={() => handleRoomSelection(roomType.name)}
+                    className="w-full"
+                  >
+                    {roomType.name}
+                  </Button>
+                  {selectedRooms.some(room => room.type === roomType.name) && 
+                   COUNTABLE_ROOMS.includes(roomType.name) && (
+                    <div className="flex items-center justify-center gap-2 mt-1">
+                      <Button 
+                        size="icon" 
+                        variant="outline"
+                        onClick={() => handleQuantityChange(
+                          selectedRooms.find(r => r.type === roomType.name)!.id,
+                          -1
+                        )}
+                      >
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                      <span className="min-w-[2rem] text-center">
+                        {selectedRooms.find(r => r.type === roomType.name)?.quantity || 1}
+                      </span>
+                      <Button 
+                        size="icon" 
+                        variant="outline"
+                        onClick={() => handleQuantityChange(
+                          selectedRooms.find(r => r.type === roomType.name)!.id,
+                          1
+                        )}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
             <div className="flex justify-end">
@@ -159,7 +227,9 @@ export const ServiceBookingModal = ({ open, onOpenChange }: ServiceBookingModalP
           <div className="space-y-6">
             {selectedRooms.map((room) => (
               <div key={room.id} className="space-y-4 border p-4 rounded-lg">
-                <h3 className="font-semibold">{room.type}</h3>
+                <h3 className="font-semibold">
+                  {room.type} {room.quantity && room.quantity > 1 ? `(${room.quantity}x)` : ''}
+                </h3>
                 <div className="space-y-2">
                   <div className="flex gap-4">
                     <Button
@@ -222,7 +292,9 @@ export const ServiceBookingModal = ({ open, onOpenChange }: ServiceBookingModalP
             <div className="space-y-4">
               {selectedRooms.map((room) => (
                 <div key={room.id} className="border p-4 rounded-lg">
-                  <h3 className="font-semibold">{room.type}</h3>
+                  <h3 className="font-semibold">
+                    {room.type} {room.quantity && room.quantity > 1 ? `(${room.quantity}x)` : ''}
+                  </h3>
                   <p>Service: {room.serviceType === "deep" ? "Deep Clean ($100)" : "Standard Clean ($50)"}</p>
                   {room.addons.length > 0 && (
                     <div className="mt-2">
