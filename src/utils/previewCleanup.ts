@@ -6,16 +6,15 @@ const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 // Generic retry wrapper for database operations
 async function retryOperation<T>(
-  operation: () => Promise<PostgrestResponse<T>>,
+  operation: () => Promise<T>,
   maxRetries = 3,
   delay = 1000
-): Promise<PostgrestResponse<T>> {
+): Promise<T> {
   let lastError: any;
   
   for (let i = 0; i < maxRetries; i++) {
     try {
       const result = await operation();
-      if (result.error) throw result.error;
       return result;
     } catch (error) {
       lastError = error;
@@ -30,11 +29,12 @@ async function retryOperation<T>(
 
 // Delete booking addons for a specific booking room
 async function deleteBookingAddons(bookingRoomId: string) {
-  return await retryOperation(() =>
+  return retryOperation(() =>
     supabase
       .from('booking_addons')
       .delete()
       .eq('booking_room_id', bookingRoomId)
+      .then()
   );
 }
 
@@ -51,11 +51,12 @@ async function deleteBookingRooms(bookingId: string) {
     }
   }
 
-  return await retryOperation(() =>
+  return retryOperation(() =>
     supabase
       .from('booking_rooms')
       .delete()
       .eq('booking_id', bookingId)
+      .then()
   );
 }
 
@@ -72,41 +73,45 @@ async function deleteServiceBookings(userId: string) {
     }
   }
 
-  return await retryOperation(() =>
+  return retryOperation(() =>
     supabase
       .from('service_bookings')
       .delete()
       .eq('user_id', userId)
+      .then()
   );
 }
 
 // Delete service preferences for a user
 async function deleteServicePreferences(userId: string) {
-  return await retryOperation(() =>
+  return retryOperation(() =>
     supabase
       .from('service_preferences')
       .delete()
       .eq('user_id', userId)
+      .then()
   );
 }
 
 // Delete properties for a user
 async function deleteProperties(userId: string) {
-  return await retryOperation(() =>
+  return retryOperation(() =>
     supabase
       .from('properties')
       .delete()
       .eq('user_id', userId)
+      .then()
   );
 }
 
 // Delete user profile
 async function deleteProfile(userId: string) {
-  return await retryOperation(() =>
+  return retryOperation(() =>
     supabase
       .from('profiles')
       .delete()
       .eq('id', userId)
+      .then()
   );
 }
 
