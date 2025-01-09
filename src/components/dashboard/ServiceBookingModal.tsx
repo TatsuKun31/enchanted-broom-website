@@ -42,7 +42,7 @@ export const ServiceBookingModal = ({ open, onOpenChange, existingBooking }: Ser
       return existingBooking.rooms.map(room => ({
         id: room.id,
         type: room.type,
-        serviceType: room.serviceType,
+        serviceType: room.serviceType === "deep" ? "deep" : "standard",
         addons: room.addons,
         quantity: room.quantity
       }));

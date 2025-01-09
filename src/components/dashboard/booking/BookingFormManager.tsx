@@ -15,6 +15,7 @@ interface BookingFormManagerProps {
   COUNTABLE_ROOMS: string[];
   toast: any;
   onOpenChange: (open: boolean) => void;
+  existingBookingId?: string;
 }
 
 export const BookingFormManager = ({
@@ -26,6 +27,7 @@ export const BookingFormManager = ({
   COUNTABLE_ROOMS,
   toast,
   onOpenChange,
+  existingBookingId,
 }: BookingFormManagerProps) => {
   const handleRoomSelection = (roomType: string) => {
     if (COUNTABLE_ROOMS.includes(roomType)) {
@@ -96,25 +98,49 @@ export const BookingFormManager = ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
-      const { data: booking, error: bookingError } = await supabase
-        .from("service_bookings")
-        .insert({
-          user_id: user.id,
-          total_price: calculateTotal(),
-          status: "pending",
-          booking_date: date.toISOString().split('T')[0],
-          time_slot: timeSlot
-        })
-        .select()
-        .single();
+      if (existingBookingId) {
+        // Update existing booking
+        const { error: bookingError } = await supabase
+          .from("service_bookings")
+          .update({
+            total_price: calculateTotal(),
+            booking_date: date.toISOString().split('T')[0],
+            time_slot: timeSlot
+          })
+          .eq('id', existingBookingId);
 
-      if (bookingError) throw bookingError;
+        if (bookingError) throw bookingError;
 
+        // Delete existing rooms
+        const { error: deleteRoomsError } = await supabase
+          .from("booking_rooms")
+          .delete()
+          .eq('booking_id', existingBookingId);
+
+        if (deleteRoomsError) throw deleteRoomsError;
+      } else {
+        // Create new booking
+        const { data: booking, error: bookingError } = await supabase
+          .from("service_bookings")
+          .insert({
+            user_id: user.id,
+            total_price: calculateTotal(),
+            status: "pending",
+            booking_date: date.toISOString().split('T')[0],
+            time_slot: timeSlot
+          })
+          .select()
+          .single();
+
+        if (bookingError) throw bookingError;
+      }
+
+      // Insert new rooms
       for (const room of selectedRooms) {
         const { error: roomError } = await supabase
           .from("booking_rooms")
           .insert({
-            booking_id: booking.id,
+            booking_id: existingBookingId || booking.id,
             room_type_id: roomTypes?.find(rt => rt.name === room.type)?.id,
             service_type: room.serviceType
           });
@@ -124,7 +150,7 @@ export const BookingFormManager = ({
 
       toast({
         title: "Success!",
-        description: "Your service has been booked successfully.",
+        description: existingBookingId ? "Your service has been updated successfully." : "Your service has been booked successfully.",
       });
       onOpenChange(false);
     } catch (error) {
