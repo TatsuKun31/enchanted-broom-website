@@ -47,7 +47,6 @@ export const DashboardTabs = () => {
         }))
       }));
     },
-    refetchInterval: 5000,
   });
 
   return (
