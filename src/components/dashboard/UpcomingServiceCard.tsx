@@ -17,6 +17,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { CalendarDays, Clock } from "lucide-react";
 import { BookingDetails } from "./booking/BookingDetails";
 import { cancelBooking } from "./booking/BookingCancellation";
+import { Room } from "./booking/types";
 
 interface UpcomingServiceCardProps {
   booking: {
@@ -54,6 +55,15 @@ export const UpcomingServiceCard = ({ booking }: UpcomingServiceCardProps) => {
     setShowCancelDialog(false);
   };
 
+  // Transform the rooms data to match the Room type
+  const transformedRooms: Room[] = booking.rooms.map(room => ({
+    id: room.id,
+    type: room.type,
+    serviceType: room.serviceType === "deep" ? "deep" : "standard", // Ensure correct type
+    addons: room.addons,
+    quantity: room.quantity
+  }));
+
   return (
     <Card className="mb-4 border border-purple-secondary/20 hover:border-purple-primary/30 transition-all duration-300 bg-purple-secondary/5 dark:bg-purple-dark/10">
       <CardHeader className="rounded-t-lg pb-4">
@@ -69,7 +79,7 @@ export const UpcomingServiceCard = ({ booking }: UpcomingServiceCardProps) => {
       <BookingDetails
         date={booking.booking_date}
         timeSlot={booking.time_slot}
-        rooms={booking.rooms}
+        rooms={transformedRooms}
         timeSlotMap={timeSlotMap}
       />
 
@@ -119,7 +129,12 @@ export const UpcomingServiceCard = ({ booking }: UpcomingServiceCardProps) => {
       <ServiceBookingModal
         open={showEditModal}
         onOpenChange={setShowEditModal}
-        existingBooking={booking}
+        existingBooking={{
+          id: booking.id,
+          booking_date: booking.booking_date,
+          time_slot: booking.time_slot,
+          rooms: transformedRooms
+        }}
       />
     </Card>
   );
