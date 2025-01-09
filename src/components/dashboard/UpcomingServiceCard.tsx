@@ -54,17 +54,21 @@ export const UpcomingServiceCard = ({ booking }: UpcomingServiceCardProps) => {
         .select("id")
         .eq("booking_id", booking.id);
 
-      if (roomsQueryError) throw roomsQueryError;
+      if (roomsQueryError) {
+        throw roomsQueryError;
+      }
 
-      if (bookingRooms) {
-        // Delete all addons for each booking room one by one
+      if (bookingRooms && bookingRooms.length > 0) {
+        // Delete all addons for each booking room
         for (const room of bookingRooms) {
           const { error: addonsError } = await supabase
             .from("booking_addons")
             .delete()
             .eq("booking_room_id", room.id);
 
-          if (addonsError) throw addonsError;
+          if (addonsError) {
+            throw addonsError;
+          }
         }
 
         // After all addons are deleted, delete all booking rooms
@@ -73,25 +77,29 @@ export const UpcomingServiceCard = ({ booking }: UpcomingServiceCardProps) => {
           .delete()
           .eq("booking_id", booking.id);
 
-        if (roomsError) throw roomsError;
-
-        // Finally, delete the service booking
-        const { error: bookingError } = await supabase
-          .from("service_bookings")
-          .delete()
-          .eq("id", booking.id);
-
-        if (bookingError) throw bookingError;
-
-        toast({
-          title: "Service Cancelled",
-          description: "Your service has been successfully cancelled.",
-        });
-
-        // Invalidate queries to refresh the data
-        queryClient.invalidateQueries({ queryKey: ["nextService"] });
-        queryClient.invalidateQueries({ queryKey: ["upcomingServices"] });
+        if (roomsError) {
+          throw roomsError;
+        }
       }
+
+      // Finally, delete the service booking
+      const { error: bookingError } = await supabase
+        .from("service_bookings")
+        .delete()
+        .eq("id", booking.id);
+
+      if (bookingError) {
+        throw bookingError;
+      }
+
+      toast({
+        title: "Service Cancelled",
+        description: "Your service has been successfully cancelled.",
+      });
+
+      // Invalidate queries to refresh the data
+      queryClient.invalidateQueries({ queryKey: ["nextService"] });
+      queryClient.invalidateQueries({ queryKey: ["upcomingServices"] });
     } catch (error) {
       console.error("Error cancelling service:", error);
       toast({
