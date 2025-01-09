@@ -35,15 +35,27 @@ const Auth = () => {
 
   const handleDevLogin = async () => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      // First try to create the test account if it doesn't exist
+      const { error: signUpError } = await supabase.auth.signUp({
         email: 'test@example.com',
         password: 'testpassword123'
       });
 
-      if (error) throw error;
+      // Attempt to sign in regardless of whether sign up succeeded
+      // (in case the account already exists)
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: 'test@example.com',
+        password: 'testpassword123'
+      });
+
+      if (signInError) {
+        throw signInError;
+      }
+      
       navigate("/room-details");
     } catch (error) {
-      toast.error("Dev login failed. Make sure to create a test account first.");
+      toast.error("Dev login failed. Please try again.");
+      console.error("Dev login error:", error);
     }
   };
 
@@ -83,15 +95,17 @@ const Auth = () => {
               },
               style: {
                 input: {
-                  backgroundColor: 'var(--colors-inputBackground)',
-                  color: 'var(--colors-inputText)',
-                  borderColor: 'var(--colors-inputBorder)',
+                  backgroundColor: 'var(--background)',
+                  color: 'var(--foreground)',
+                  borderColor: 'var(--border)',
                 },
                 anchor: {
-                  color: 'var(--colors-brand)',
-                  '&:hover': {
-                    color: 'var(--colors-brandAccent)',
-                  },
+                  color: 'var(--primary)',
+                  textDecoration: 'none',
+                },
+                button: {
+                  backgroundColor: 'var(--primary)',
+                  color: 'var(--primary-foreground)',
                 },
               },
             }}
