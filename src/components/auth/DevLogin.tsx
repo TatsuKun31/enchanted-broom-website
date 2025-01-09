@@ -80,6 +80,14 @@ export const DevLogin = () => {
           return;
         }
         
+        if (signUpError.message.includes('user_already_exists')) {
+          // If user was created between our check and signup, try the next number
+          localStorage.setItem('lastTestNumber', finalTestNumber.toString());
+          setCurrentTestNumber(finalTestNumber);
+          handleDevLogin(); // Retry with next number
+          return;
+        }
+        
         throw signUpError;
       }
 
