@@ -19,21 +19,18 @@ export const DevLogin = () => {
 
   const checkUserExists = async (email: string) => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email: email,
         password: 'wrong-password-to-check-existence'
       });
 
-      if (error) {
-        // If we get "Invalid login credentials", the user exists
-        // If we get "Email not confirmed", the user exists
-        // If we get any other error, the user doesn't exist
-        return error.message.includes('Invalid login credentials') || 
-               error.message.includes('Email not confirmed');
+      // These specific error messages indicate the user exists
+      if (error?.message.includes('Invalid login credentials') || 
+          error?.message.includes('Email not confirmed')) {
+        return true;
       }
-
-      // If no error, user exists and somehow the password worked (shouldn't happen)
-      return true;
+      
+      return false;
     } catch (error) {
       console.error("Error checking user existence:", error);
       return false;
@@ -42,20 +39,22 @@ export const DevLogin = () => {
 
   const findNextAvailableEmail = async (startNumber: number): Promise<{ email: string; number: number }> => {
     let testNumber = startNumber;
-    let userExists = true;
+    let maxAttempts = 100; // Prevent infinite loops
+    let attempts = 0;
     
-    while (userExists) {
+    while (attempts < maxAttempts) {
       const testEmail = `test${testNumber}@example.com`;
-      userExists = await checkUserExists(testEmail);
+      const userExists = await checkUserExists(testEmail);
       
       if (!userExists) {
         return { email: testEmail, number: testNumber };
       }
+      
       testNumber++;
+      attempts++;
     }
     
-    // This should never be reached due to the while loop
-    throw new Error("Could not find available email");
+    throw new Error("Could not find available email after maximum attempts");
   };
 
   const handleDevLogin = async () => {
@@ -73,10 +72,18 @@ export const DevLogin = () => {
       if (signUpError) {
         if (signUpError.message.includes('email_provider_disabled')) {
           toast.error("Email authentication is disabled. Please enable it in Supabase settings.");
-        } else {
-          throw signUpError;
+          return;
         }
-        return;
+        
+        if (signUpError.message.includes('user_already_exists')) {
+          // If somehow the user was created between our check and signup,
+          // we'll try again with the next number
+          console.log("User was created between check and signup, retrying...");
+          handleDevLogin();
+          return;
+        }
+        
+        throw signUpError;
       }
 
       // If signup successful, try to sign in immediately
@@ -93,6 +100,7 @@ export const DevLogin = () => {
       localStorage.setItem('lastTestNumber', finalTestNumber.toString());
       setCurrentTestNumber(finalTestNumber);
       
+      toast.success(`Logged in as ${availableEmail}`);
       navigate("/room-details");
     } catch (error) {
       if (error instanceof AuthError) {
