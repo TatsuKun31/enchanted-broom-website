@@ -4,6 +4,38 @@ import ThemeToggle from "./ThemeToggle";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
+// PREVIEW ONLY - Remove this function before production deployment
+const cleanupUserData = async (userId: string) => {
+  if (!userId) return;
+  
+  try {
+    // Delete service bookings (this will cascade to booking_rooms and booking_addons)
+    await supabase
+      .from('service_bookings')
+      .delete()
+      .eq('user_id', userId);
+
+    // Delete service preferences
+    await supabase
+      .from('service_preferences')
+      .delete()
+      .eq('user_id', userId);
+
+    // Delete properties
+    await supabase
+      .from('properties')
+      .delete()
+      .eq('user_id', userId);
+
+    // Sign out the user
+    await supabase.auth.signOut();
+    
+    console.log('Preview cleanup completed');
+  } catch (error) {
+    console.error('Preview cleanup error:', error);
+  }
+};
+
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -21,7 +53,20 @@ const Navigation = () => {
       setIsAuthenticated(!!session);
     });
 
-    return () => subscription.unsubscribe();
+    // PREVIEW ONLY - Remove this effect before production deployment
+    const handleCleanup = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.id) {
+        await cleanupUserData(session.user.id);
+      }
+    };
+
+    window.addEventListener('beforeunload', handleCleanup);
+
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener('beforeunload', handleCleanup);
+    };
   }, []);
 
   const handleBookNow = () => {
