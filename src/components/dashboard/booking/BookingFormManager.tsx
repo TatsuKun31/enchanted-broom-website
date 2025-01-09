@@ -98,6 +98,8 @@ export const BookingFormManager = ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
+      let bookingId = existingBookingId;
+
       if (existingBookingId) {
         // Update existing booking
         const { error: bookingError } = await supabase
@@ -133,6 +135,7 @@ export const BookingFormManager = ({
           .single();
 
         if (bookingError) throw bookingError;
+        bookingId = booking.id;
       }
 
       // Insert new rooms
@@ -140,7 +143,7 @@ export const BookingFormManager = ({
         const { error: roomError } = await supabase
           .from("booking_rooms")
           .insert({
-            booking_id: existingBookingId || booking.id,
+            booking_id: bookingId,
             room_type_id: roomTypes?.find(rt => rt.name === room.type)?.id,
             service_type: room.serviceType
           });
