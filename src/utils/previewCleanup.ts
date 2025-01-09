@@ -115,7 +115,7 @@ async function deleteProfile(userId: string) {
   );
 }
 
-// Sign out user completely
+// Sign out user completely and clear all local data
 async function signOutCompletely() {
   try {
     const { error } = await supabase.auth.signOut({
@@ -150,7 +150,7 @@ export async function cleanupUserData(userId: string) {
     await deleteProperties(userId);
     await deleteProfile(userId);
 
-    // Complete sign out
+    // Complete sign out and clear all local data
     await signOutCompletely();
 
   } catch (error) {

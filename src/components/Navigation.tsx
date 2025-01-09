@@ -4,12 +4,14 @@ import ThemeToggle from "./ThemeToggle";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { cleanupUserData } from "@/utils/previewCleanup";
+import { useQueryClient } from "@tanstack/react-query";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     let mounted = true;
@@ -39,6 +41,8 @@ const Navigation = () => {
           try {
             if (session?.user?.id) {
               await cleanupUserData(session.user.id);
+              // Clear all queries from the cache
+              queryClient.clear();
             }
           } catch (error) {
             console.error('Cleanup error:', error);
@@ -62,7 +66,7 @@ const Navigation = () => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [navigate, queryClient]);
 
   const handleBookNow = () => {
     navigate('/auth');
