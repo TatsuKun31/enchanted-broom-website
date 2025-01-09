@@ -38,7 +38,7 @@ const RoomDetails = () => {
           .from('profiles')
           .select('*')
           .eq('id', session.user.id)
-          .single();
+          .maybeSingle();
 
         if (profileError) {
           console.error('Profile fetch error:', profileError);
@@ -50,9 +50,9 @@ const RoomDetails = () => {
           .from('properties')
           .select('*')
           .eq('user_id', session.user.id)
-          .single();
+          .maybeSingle();
 
-        if (propertyError && propertyError.code !== 'PGRST116') { // PGRST116 is "no rows returned" error
+        if (propertyError && propertyError.code !== 'PGRST116') {
           console.error('Property fetch error:', propertyError);
           return;
         }
@@ -62,7 +62,7 @@ const RoomDetails = () => {
           .from('service_preferences')
           .select('*')
           .eq('user_id', session.user.id)
-          .single();
+          .maybeSingle();
 
         if (preferencesError && preferencesError.code !== 'PGRST116') {
           console.error('Preferences fetch error:', preferencesError);
@@ -80,6 +80,15 @@ const RoomDetails = () => {
             timePreference: preferences.time_preference || "",
           });
           setCurrentStep("completed");
+        } else {
+          // Start from the appropriate step based on what data is missing
+          if (!profile?.name) {
+            setCurrentStep("basic-info");
+          } else if (!property?.property_type) {
+            setCurrentStep("property-details");
+          } else {
+            setCurrentStep("service-preferences");
+          }
         }
       } catch (error) {
         console.error('Error checking user data:', error);
