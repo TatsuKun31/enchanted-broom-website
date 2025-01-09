@@ -91,7 +91,7 @@ export const BookingFormManager = ({
     return total;
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (date: Date, timeSlot: string) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
@@ -101,7 +101,9 @@ export const BookingFormManager = ({
         .insert({
           user_id: user.id,
           total_price: calculateTotal(),
-          status: "pending"
+          status: "pending",
+          booking_date: date.toISOString().split('T')[0],
+          time_slot: timeSlot
         })
         .select()
         .single();

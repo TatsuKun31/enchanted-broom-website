@@ -3,11 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Room } from "./types";
 import { BookingConfirmationModal } from "./BookingConfirmationModal";
 import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
 
 interface BookingSummaryProps {
   selectedRooms: Room[];
   onBack: () => void;
-  onSubmit: () => void;
+  onSubmit: (date: Date, timeSlot: string) => void;
   calculateTotal: () => number;
 }
 
@@ -29,10 +30,10 @@ export const BookingSummary = ({
     
     toast({
       title: "Booking Confirmed",
-      description: `Your cleaning service has been scheduled for ${date.toLocaleDateString()} at ${timeSlotMap[timeSlot as keyof typeof timeSlotMap]}`,
+      description: `Your cleaning service has been scheduled for ${format(date, 'MMMM do, yyyy')} at ${timeSlotMap[timeSlot as keyof typeof timeSlotMap]}`,
     });
     setShowCalendar(false);
-    onSubmit();
+    onSubmit(date, timeSlot);
   };
 
   return (

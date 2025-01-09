@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { DashboardHeader } from "./DashboardHeader";
 import { DashboardStats } from "./DashboardStats";
 import { DashboardTabs } from "./DashboardTabs";
+import { format } from "date-fns";
 
 interface DashboardViewProps {
   userData: {
@@ -17,6 +18,7 @@ interface DashboardViewProps {
 
 export const DashboardView = ({ userData }: DashboardViewProps) => {
   const navigate = useNavigate();
+  const [nextService, setNextService] = useState<string>();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -26,7 +28,33 @@ export const DashboardView = ({ userData }: DashboardViewProps) => {
       }
     };
 
+    const fetchNextService = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: bookings, error } = await supabase
+        .from("service_bookings")
+        .select("booking_date, time_slot")
+        .eq("user_id", user.id)
+        .eq("status", "pending")
+        .gte("booking_date", new Date().toISOString().split('T')[0])
+        .order("booking_date", { ascending: true })
+        .limit(1)
+        .single();
+
+      if (bookings && !error) {
+        const timeSlotMap = {
+          morning: "9:00 AM - 11:00 AM",
+          midday: "12:00 PM - 2:00 PM",
+          afternoon: "3:00 PM - 5:00 PM",
+        };
+        
+        setNextService(`${format(new Date(bookings.booking_date), 'MMMM do, yyyy')} at ${timeSlotMap[bookings.time_slot as keyof typeof timeSlotMap]}`);
+      }
+    };
+
     checkAuth();
+    fetchNextService();
   }, [navigate]);
 
   const handleSignOut = async () => {
@@ -45,7 +73,7 @@ export const DashboardView = ({ userData }: DashboardViewProps) => {
       <div className="container mx-auto px-4 py-24">
         <DashboardHeader userName={userData.name} onSignOut={handleSignOut} />
         <DashboardStats 
-          nextService={userData.nextService}
+          nextService={nextService}
           frequency={userData.frequency}
           propertyType={userData.propertyType}
         />

@@ -157,23 +157,29 @@ export type Database = {
       }
       service_bookings: {
         Row: {
+          booking_date: string | null
           created_at: string
           id: string
           status: string | null
+          time_slot: string | null
           total_price: number
           user_id: string | null
         }
         Insert: {
+          booking_date?: string | null
           created_at?: string
           id?: string
           status?: string | null
+          time_slot?: string | null
           total_price: number
           user_id?: string | null
         }
         Update: {
+          booking_date?: string | null
           created_at?: string
           id?: string
           status?: string | null
+          time_slot?: string | null
           total_price?: number
           user_id?: string | null
         }
