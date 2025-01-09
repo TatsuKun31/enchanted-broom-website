@@ -23,44 +23,46 @@ const Auth = () => {
             Sign in or create an account to get started
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <SupabaseAuth 
-            supabaseClient={supabase}
-            appearance={{
-              theme: ThemeSupa,
-              variables: {
-                default: {
-                  colors: {
-                    brand: '#8B5CF6',
-                    brandAccent: '#7C3AED',
-                    inputBackground: 'white',
-                    inputText: 'black',
-                    inputBorder: '#E5E7EB',
-                    inputBorderFocus: '#8B5CF6',
-                    inputBorderHover: '#8B5CF6',
-                    inputPlaceholder: '#9CA3AF',
+        <CardContent>
+          <div className="space-y-4">
+            <SupabaseAuth 
+              supabaseClient={supabase}
+              appearance={{
+                theme: ThemeSupa,
+                variables: {
+                  default: {
+                    colors: {
+                      brand: '#8B5CF6',
+                      brandAccent: '#7C3AED',
+                      inputBackground: 'white',
+                      inputText: 'black',
+                      inputBorder: '#E5E7EB',
+                      inputBorderFocus: '#8B5CF6',
+                      inputBorderHover: '#8B5CF6',
+                      inputPlaceholder: '#9CA3AF',
+                    }
                   }
-                }
-              },
-              style: {
-                input: {
-                  backgroundColor: 'var(--background)',
-                  color: 'var(--foreground)',
-                  borderColor: 'var(--border)',
                 },
-                anchor: {
-                  color: 'var(--primary)',
-                  textDecoration: 'none',
+                style: {
+                  input: {
+                    backgroundColor: 'var(--background)',
+                    color: 'var(--foreground)',
+                    borderColor: 'var(--border)',
+                  },
+                  anchor: {
+                    color: 'var(--primary)',
+                    textDecoration: 'none',
+                  },
+                  button: {
+                    backgroundColor: 'var(--primary)',
+                    color: 'var(--primary-foreground)',
+                  },
                 },
-                button: {
-                  backgroundColor: 'var(--primary)',
-                  color: 'var(--primary-foreground)',
-                },
-              },
-            }}
-            providers={["google"]}
-          />
-          <DevLogin />
+              }}
+              providers={["google"]}
+            />
+            <DevLogin />
+          </div>
         </CardContent>
       </Card>
     </div>
