@@ -6,9 +6,16 @@ import { OnboardingStep, UserData } from "@/hooks/useRoomDetailsData";
 interface OnboardingFlowProps {
   currentStep: OnboardingStep;
   userData: UserData;
+  setCurrentStep: (step: OnboardingStep) => void;
+  setUserData: (data: UserData | ((prev: UserData) => UserData)) => void;
 }
 
-export const OnboardingFlow = ({ currentStep, userData }: OnboardingFlowProps) => {
+export const OnboardingFlow = ({ 
+  currentStep, 
+  userData, 
+  setCurrentStep, 
+  setUserData 
+}: OnboardingFlowProps) => {
   const handleBasicInfoNext = (data: { name: string; phone: string }) => {
     setUserData((prev) => ({ ...prev, ...data }));
     setCurrentStep("property-details");

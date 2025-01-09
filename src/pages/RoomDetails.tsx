@@ -8,7 +8,9 @@ import { LoadingScreen } from "@/components/LoadingScreen";
 const RoomDetails = () => {
   const { 
     currentStep, 
+    setCurrentStep,
     userData, 
+    setUserData,
     isLoading, 
     profileError 
   } = useRoomDetailsData();
@@ -27,7 +29,12 @@ const RoomDetails = () => {
     <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white dark:from-purple-dark/20 dark:to-purple-dark/40">
       <Navigation />
       {currentStep !== "completed" ? (
-        <OnboardingFlow currentStep={currentStep} userData={userData} />
+        <OnboardingFlow 
+          currentStep={currentStep} 
+          userData={userData}
+          setCurrentStep={setCurrentStep}
+          setUserData={setUserData}
+        />
       ) : (
         <DashboardView userData={userData} />
       )}
