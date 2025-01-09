@@ -64,7 +64,7 @@ const Navigation = () => {
           } catch (error) {
             console.error('Cleanup error:', error);
           } finally {
-            navigate('/auth');
+            navigate('/'); // Changed from '/auth' to '/'
           }
         } else if (event === 'TOKEN_REFRESHED') {
           setIsAuthenticated(true);
