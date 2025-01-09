@@ -54,13 +54,29 @@ const Auth = () => {
               variables: {
                 default: {
                   colors: {
-                    brand: '#9333ea',
-                    brandAccent: '#7e22ce'
+                    brand: '#8B5CF6',
+                    brandAccent: '#7C3AED',
+                    inputBackground: 'white',
+                    inputText: 'black',
+                    inputBorder: '#E5E7EB',
+                    inputBorderFocus: '#8B5CF6',
+                    inputBorderHover: '#8B5CF6',
+                    inputPlaceholder: '#9CA3AF',
+                  },
+                  dark: {
+                    colors: {
+                      inputBackground: '#374151',
+                      inputText: 'white',
+                      inputBorder: '#4B5563',
+                      inputBorderFocus: '#8B5CF6',
+                      inputBorderHover: '#8B5CF6',
+                      inputPlaceholder: '#9CA3AF',
+                    }
                   }
                 }
               }
             }}
-            providers={[]}
+            providers={["google"]}
           />
         </CardContent>
       </Card>

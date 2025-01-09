@@ -44,9 +44,9 @@ export const DashboardView = ({ userData }: DashboardViewProps) => {
   };
 
   return (
-    <div className="space-y-8 p-8 animate-fade-up">
+    <div className="space-y-8 p-8 mt-20 animate-fade-up">
       {showTutorial && (
-        <div className="mb-8">
+        <div className="mb-8 relative z-0">
           <Samantha 
             message={`Welcome to your dashboard, ${userData.name}! Here you can view your upcoming services, billing information, and manage your preferences. Let me show you around!`}
             position="right"
