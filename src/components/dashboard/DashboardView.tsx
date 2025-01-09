@@ -78,10 +78,13 @@ export const DashboardView = ({ userData }: DashboardViewProps) => {
             <div className="text-2xl font-bold capitalize">{userData.propertyType}</div>
           </CardContent>
         </Card>
-        <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setIsBookingModalOpen(true)}>
+        <Card 
+          className="cursor-pointer hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-br from-purple-primary to-purple-600 text-white" 
+          onClick={() => setIsBookingModalOpen(true)}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Book Service</CardTitle>
-            <Calendar className="h-4 w-4 text-purple-primary" />
+            <CardTitle className="text-sm font-medium text-white">Book Service</CardTitle>
+            <Calendar className="h-4 w-4 text-white" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">Schedule Now</div>
