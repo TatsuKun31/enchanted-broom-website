@@ -17,15 +17,48 @@ export const DevLogin = () => {
     }
   }, []);
 
+  const checkUserExists = async (email: string) => {
+    const { data, error } = await supabase.auth.admin.listUsers({
+      filters: {
+        email: email
+      }
+    });
+    
+    if (error) {
+      console.error("Error checking user existence:", error);
+      return false;
+    }
+    
+    return data?.users?.length > 0;
+  };
+
+  const findNextAvailableEmail = async (startNumber: number): Promise<{ email: string; number: number }> => {
+    let testNumber = startNumber;
+    let userExists = true;
+    
+    while (userExists) {
+      const testEmail = `test${testNumber}@example.com`;
+      userExists = await checkUserExists(testEmail);
+      
+      if (!userExists) {
+        return { email: testEmail, number: testNumber };
+      }
+      testNumber++;
+    }
+    
+    // This should never be reached due to the while loop
+    throw new Error("Could not find available email");
+  };
+
   const handleDevLogin = async () => {
     try {
       const nextTestNumber = currentTestNumber + 1;
-      const testEmail = `test${nextTestNumber}@example.com`;
+      const { email: availableEmail, number: finalTestNumber } = await findNextAvailableEmail(nextTestNumber);
       const testPassword = 'testpassword123';
 
-      // Try to sign up with the new incremental email
+      // Try to sign up with the new available email
       const { error: signUpError } = await supabase.auth.signUp({
-        email: testEmail,
+        email: availableEmail,
         password: testPassword
       });
 
@@ -40,7 +73,7 @@ export const DevLogin = () => {
 
       // If signup successful, try to sign in immediately
       const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: testEmail,
+        email: availableEmail,
         password: testPassword
       });
 
@@ -49,8 +82,8 @@ export const DevLogin = () => {
       }
 
       // Save the new test number to localStorage
-      localStorage.setItem('lastTestNumber', nextTestNumber.toString());
-      setCurrentTestNumber(nextTestNumber);
+      localStorage.setItem('lastTestNumber', finalTestNumber.toString());
+      setCurrentTestNumber(finalTestNumber);
       
       navigate("/room-details");
     } catch (error) {
