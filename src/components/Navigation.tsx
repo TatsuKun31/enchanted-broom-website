@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Menu, X, LayoutDashboard } from "lucide-react";
+import { Menu, X, LayoutDashboard, LogIn, LogOut } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -68,8 +68,17 @@ const Navigation = () => {
     };
   }, [navigate, queryClient]);
 
-  const handleBookNow = () => {
-    navigate('/auth');
+  const handleAuth = async () => {
+    if (isAuthenticated) {
+      try {
+        const { error } = await supabase.auth.signOut();
+        if (error) throw error;
+      } catch (error) {
+        console.error('Error signing out:', error);
+      }
+    } else {
+      navigate('/auth');
+    }
   };
 
   const handleDashboard = () => {
@@ -115,7 +124,7 @@ const Navigation = () => {
               >
                 Why Us
               </button>
-              {isAuthenticated ? (
+              {isAuthenticated && (
                 <button 
                   onClick={handleDashboard}
                   className="flex items-center gap-2 text-purple-dark dark:text-white/90 hover:text-purple-primary transition-colors"
@@ -123,15 +132,17 @@ const Navigation = () => {
                   <LayoutDashboard size={20} />
                   <span>Dashboard</span>
                 </button>
-              ) : (
-                <button 
-                  onClick={handleBookNow}
-                  className="bg-purple-primary hover:bg-purple-primary/90 text-white px-6 py-2 rounded-lg transition-all duration-300 hover:scale-105"
-                >
-                  Book Now
-                </button>
               )}
             </div>
+
+            {/* Auth button */}
+            <button
+              onClick={handleAuth}
+              className="flex items-center gap-2 text-purple-dark dark:text-white/90 hover:text-purple-primary transition-colors"
+              aria-label={isAuthenticated ? "Sign out" : "Sign in"}
+            >
+              {isAuthenticated ? <LogOut size={20} /> : <LogIn size={20} />}
+            </button>
             
             <ThemeToggle />
             
@@ -161,20 +172,13 @@ const Navigation = () => {
               >
                 Why Us
               </button>
-              {isAuthenticated ? (
+              {isAuthenticated && (
                 <button 
                   onClick={handleDashboard}
                   className="flex items-center gap-2 text-purple-dark dark:text-white/90 hover:text-purple-primary transition-colors"
                 >
                   <LayoutDashboard size={20} />
                   <span>Dashboard</span>
-                </button>
-              ) : (
-                <button 
-                  onClick={handleBookNow}
-                  className="bg-purple-primary hover:bg-purple-primary/90 text-white px-6 py-2 rounded-lg transition-all duration-300 w-full text-left"
-                >
-                  Book Now
                 </button>
               )}
             </div>
