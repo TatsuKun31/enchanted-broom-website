@@ -6,10 +6,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { DevLogin } from "@/components/auth/DevLogin";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 const Auth = () => {
   const { isLoading } = useAuthRedirect();
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -37,6 +41,15 @@ const Auth = () => {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-purple-50 to-white dark:from-purple-dark/20 dark:to-purple-dark/40 p-4">
+      <Button
+        variant="ghost"
+        onClick={() => navigate('/')}
+        className="absolute top-4 left-4 flex items-center gap-2 text-purple-primary hover:text-purple-primary/80"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Return to Home Page
+      </Button>
+      
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">Welcome</CardTitle>
