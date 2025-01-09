@@ -7,38 +7,32 @@ export const cancelBooking = async (
   queryClient: QueryClient
 ) => {
   try {
-    // First, get all booking rooms
+    // First, get all booking rooms for this booking
     const { data: bookingRooms, error: roomsQueryError } = await supabase
       .from("booking_rooms")
       .select("id")
       .eq("booking_id", bookingId);
 
-    if (roomsQueryError) {
-      throw roomsQueryError;
-    }
+    if (roomsQueryError) throw roomsQueryError;
 
+    // Delete all addons for each booking room
     if (bookingRooms && bookingRooms.length > 0) {
-      // Delete all addons for each booking room
       for (const room of bookingRooms) {
         const { error: addonsError } = await supabase
           .from("booking_addons")
           .delete()
           .eq("booking_room_id", room.id);
 
-        if (addonsError) {
-          throw addonsError;
-        }
+        if (addonsError) throw addonsError;
       }
 
-      // After all addons are deleted, delete all booking rooms
+      // After all addons are deleted, delete the booking rooms
       const { error: roomsError } = await supabase
         .from("booking_rooms")
         .delete()
         .eq("booking_id", bookingId);
 
-      if (roomsError) {
-        throw roomsError;
-      }
+      if (roomsError) throw roomsError;
     }
 
     // Finally, delete the service booking
@@ -47,9 +41,7 @@ export const cancelBooking = async (
       .delete()
       .eq("id", bookingId);
 
-    if (bookingError) {
-      throw bookingError;
-    }
+    if (bookingError) throw bookingError;
 
     toast({
       title: "Service Cancelled",
