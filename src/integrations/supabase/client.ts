@@ -1,7 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-// Using the project URL and anon key from the Supabase project
 const supabaseUrl = 'https://wpjrdzpagwnxksikwrly.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndwanJkenBhZ3dueGtzaWt3cmx5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDc0ODg0MDAsImV4cCI6MjAyMzA2NDQwMH0.0eTW-TRibvc-FFW9ZS-1hStC3jdQqg_b1QhwFXF4PWY';
 
