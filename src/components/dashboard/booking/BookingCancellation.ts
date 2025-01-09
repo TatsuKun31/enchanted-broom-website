@@ -11,41 +11,49 @@ export const cancelBooking = async (
     const { data: bookingRooms, error: roomsQueryError } = await supabase
       .from("booking_rooms")
       .select("id")
-      .eq("booking_id", bookingId)
-      .throwOnError();
+      .eq("booking_id", bookingId);
 
-    if (roomsQueryError) throw roomsQueryError;
+    if (roomsQueryError) {
+      console.error("Error fetching booking rooms:", roomsQueryError);
+      throw roomsQueryError;
+    }
 
-    // Delete all addons for each booking room
+    // Delete all addons for each booking room sequentially
     if (bookingRooms && bookingRooms.length > 0) {
       for (const room of bookingRooms) {
         const { error: addonsError } = await supabase
           .from("booking_addons")
           .delete()
-          .eq("booking_room_id", room.id)
-          .throwOnError();
+          .eq("booking_room_id", room.id);
 
-        if (addonsError) throw addonsError;
+        if (addonsError) {
+          console.error("Error deleting booking addons:", addonsError);
+          throw addonsError;
+        }
       }
 
       // After all addons are deleted, delete the booking rooms
       const { error: roomsError } = await supabase
         .from("booking_rooms")
         .delete()
-        .eq("booking_id", bookingId)
-        .throwOnError();
+        .eq("booking_id", bookingId);
 
-      if (roomsError) throw roomsError;
+      if (roomsError) {
+        console.error("Error deleting booking rooms:", roomsError);
+        throw roomsError;
+      }
     }
 
     // Finally, delete the service booking
     const { error: bookingError } = await supabase
       .from("service_bookings")
       .delete()
-      .eq("id", bookingId)
-      .throwOnError();
+      .eq("id", bookingId);
 
-    if (bookingError) throw bookingError;
+    if (bookingError) {
+      console.error("Error deleting service booking:", bookingError);
+      throw bookingError;
+    }
 
     toast({
       title: "Service Cancelled",
