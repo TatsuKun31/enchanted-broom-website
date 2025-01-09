@@ -74,8 +74,8 @@ export const UpcomingServiceCard = ({ booking }: UpcomingServiceCardProps) => {
   };
 
   return (
-    <Card className="mb-4 border border-purple-secondary/20 hover:border-purple-primary/30 transition-all duration-300 bg-white/80 dark:bg-purple-dark/40">
-      <CardHeader className="bg-purple-secondary/5 dark:bg-purple-dark/20 rounded-t-lg pb-4">
+    <Card className="mb-4 border border-purple-secondary/20 hover:border-purple-primary/30 transition-all duration-300 bg-purple-secondary/5 dark:bg-purple-dark/10">
+      <CardHeader className="rounded-t-lg pb-4">
         <CardTitle className="text-lg font-semibold flex items-center gap-2 text-purple-primary">
           <CalendarDays className="h-5 w-5" />
           {format(new Date(booking.booking_date), "MMMM do, yyyy")}
@@ -86,7 +86,7 @@ export const UpcomingServiceCard = ({ booking }: UpcomingServiceCardProps) => {
       </CardHeader>
       <CardContent className="pt-4">
         <div className="space-y-4">
-          <div className="bg-purple-secondary/5 dark:bg-purple-dark/10 rounded-lg p-4">
+          <div className="rounded-lg p-4">
             <h4 className="font-medium mb-3 flex items-center gap-2 text-purple-primary">
               <Home className="h-5 w-5" />
               Rooms and Services
