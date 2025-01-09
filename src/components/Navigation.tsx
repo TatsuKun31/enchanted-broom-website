@@ -106,7 +106,7 @@ const Navigation = () => {
             className="text-2xl font-bold text-purple-primary cursor-pointer" 
             onClick={() => navigate('/')}
           >
-            CleanCo
+            The Enchanted Broom
           </div>
           
           <div className="flex items-center gap-4">
@@ -138,10 +138,10 @@ const Navigation = () => {
             {/* Auth button */}
             <button
               onClick={handleAuth}
-              className="flex items-center gap-2 text-purple-dark dark:text-white/90 hover:text-purple-primary transition-colors"
+              className="flex items-center justify-center gap-2 bg-purple-primary hover:bg-purple-primary/90 text-white rounded-md px-3 py-2 transition-colors"
               aria-label={isAuthenticated ? "Sign out" : "Sign in"}
             >
-              {isAuthenticated ? <LogOut size={20} /> : <LogIn size={20} />}
+              {isAuthenticated ? <LogOut className="w-5 h-5 text-white" /> : <LogIn className="w-5 h-5 text-white" />}
             </button>
             
             <ThemeToggle />
