@@ -3,7 +3,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import Samantha from "../Samantha";
 import { toast } from "sonner";
 
 interface BasicInfoStepProps {
@@ -47,10 +46,6 @@ export const BasicInfoStep = ({ onNext }: BasicInfoStepProps) => {
 
   return (
     <div className="space-y-8 animate-fade-up">
-      <Samantha 
-        message="Hi there! I'm Samantha, and I'll be your guide through setting up your cleaning service. Let's start with your basic information!" 
-        position="left"
-      />
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-2">
           <Label htmlFor="name">What's your name?</Label>

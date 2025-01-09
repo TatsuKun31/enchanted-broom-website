@@ -3,7 +3,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import Samantha from "../Samantha";
 import { toast } from "sonner";
 
 interface ServicePreferencesStepProps {
@@ -51,10 +50,6 @@ export const ServicePreferencesStep = ({ onNext, onBack }: ServicePreferencesSte
 
   return (
     <div className="space-y-8 animate-fade-up">
-      <Samantha 
-        message="Last step! Let's set up your cleaning schedule. Choose what works best for you!" 
-        position="left"
-      />
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-2">
           <Label>How often would you like cleaning service?</Label>

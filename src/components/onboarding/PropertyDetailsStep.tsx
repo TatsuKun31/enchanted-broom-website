@@ -4,7 +4,6 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import Samantha from "../Samantha";
 import { toast } from "sonner";
 
 interface PropertyDetailsStepProps {
@@ -57,10 +56,6 @@ export const PropertyDetailsStep = ({ onNext, onBack }: PropertyDetailsStepProps
 
   return (
     <div className="space-y-8 animate-fade-up">
-      <Samantha 
-        message="Great! Now, let me know about your property so we can provide the best cleaning service possible." 
-        position="right"
-      />
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-3">
           <Label>Property type</Label>
