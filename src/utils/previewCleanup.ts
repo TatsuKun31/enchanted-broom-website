@@ -1,12 +1,12 @@
 import { supabase } from "@/integrations/supabase/client";
-import { PostgrestResponse, PostgrestSingleResponse } from "@supabase/supabase-js";
+import { PostgrestBuilder, PostgrestSingleResponse } from "@supabase/supabase-js";
 
 // Utility function for delayed retry
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 // Generic retry wrapper for database operations
 async function retryOperation<T>(
-  operation: () => Promise<PostgrestSingleResponse<T>>,
+  operation: () => PostgrestBuilder<T>,
   maxRetries = 3,
   delay = 1000
 ): Promise<PostgrestSingleResponse<T>> {
@@ -15,7 +15,7 @@ async function retryOperation<T>(
   for (let i = 0; i < maxRetries; i++) {
     try {
       const result = await operation();
-      return result;
+      return result as PostgrestSingleResponse<T>;
     } catch (error) {
       lastError = error;
       if (i < maxRetries - 1) {
