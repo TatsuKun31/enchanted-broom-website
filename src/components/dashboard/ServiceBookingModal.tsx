@@ -21,11 +21,34 @@ const COUNTABLE_ROOMS = [
 interface ServiceBookingModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  existingBooking?: {
+    id: string;
+    booking_date: string;
+    time_slot: string;
+    rooms: Array<{
+      id: string;
+      type: string;
+      serviceType: string;
+      addons: string[];
+      quantity?: number;
+    }>;
+  };
 }
 
-export const ServiceBookingModal = ({ open, onOpenChange }: ServiceBookingModalProps) => {
+export const ServiceBookingModal = ({ open, onOpenChange, existingBooking }: ServiceBookingModalProps) => {
   const [step, setStep] = useState(1);
-  const [selectedRooms, setSelectedRooms] = useState<Room[]>([]);
+  const [selectedRooms, setSelectedRooms] = useState<Room[]>(() => {
+    if (existingBooking) {
+      return existingBooking.rooms.map(room => ({
+        id: room.id,
+        type: room.type,
+        serviceType: room.serviceType,
+        addons: room.addons,
+        quantity: room.quantity
+      }));
+    }
+    return [];
+  });
   const { toast } = useToast();
 
   const { data: roomTypes } = useQuery({
@@ -44,7 +67,7 @@ export const ServiceBookingModal = ({ open, onOpenChange }: ServiceBookingModalP
       <DialogContent className="max-w-xl max-h-[80vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>
-            {step === 1 ? "Select Rooms" : step === 2 ? "Choose Services" : "Review & Confirm"}
+            {existingBooking ? "Edit Booking" : step === 1 ? "Select Rooms" : step === 2 ? "Choose Services" : "Review & Confirm"}
           </DialogTitle>
         </DialogHeader>
 
@@ -58,6 +81,7 @@ export const ServiceBookingModal = ({ open, onOpenChange }: ServiceBookingModalP
             COUNTABLE_ROOMS={COUNTABLE_ROOMS}
             toast={toast}
             onOpenChange={onOpenChange}
+            existingBookingId={existingBooking?.id}
           />
         </div>
       </DialogContent>
