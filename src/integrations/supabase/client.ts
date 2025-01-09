@@ -24,9 +24,9 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
 
 // Add auth state change listener
 supabase.auth.onAuthStateChange((event, session) => {
-  if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+  if (event === 'SIGNED_OUT') {
     // Clear any application cache/state that should be removed on sign out
-    console.log('User signed out or deleted');
+    console.log('User signed out');
   }
 
   if (event === 'SIGNED_IN') {
