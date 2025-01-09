@@ -39,6 +39,7 @@ interface UpcomingServiceCardProps {
 export const UpcomingServiceCard = ({ booking }: UpcomingServiceCardProps) => {
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
   const queryClient = useQueryClient();
 
   const timeSlotMap = {
@@ -49,6 +50,7 @@ export const UpcomingServiceCard = ({ booking }: UpcomingServiceCardProps) => {
 
   const handleCancelBooking = async () => {
     try {
+      setIsCancelling(true);
       const { error } = await supabase
         .from('service_bookings')
         .delete()
@@ -63,15 +65,16 @@ export const UpcomingServiceCard = ({ booking }: UpcomingServiceCardProps) => {
       toast.success("Service cancelled successfully");
 
       // Invalidate queries
-      queryClient.invalidateQueries({ queryKey: ["upcomingServices"] });
-      queryClient.invalidateQueries({ queryKey: ["nextService"] });
-
-      // Refresh the page
-      window.location.reload();
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["upcomingServices"] }),
+        queryClient.invalidateQueries({ queryKey: ["nextService"] })
+      ]);
 
     } catch (error) {
       console.error('Error cancelling service:', error);
       toast.error("Failed to cancel service. Please try again.");
+    } finally {
+      setIsCancelling(false);
     }
   };
 
@@ -119,8 +122,9 @@ export const UpcomingServiceCard = ({ booking }: UpcomingServiceCardProps) => {
             variant="destructive"
             className="hover:bg-destructive/90"
             onClick={() => setShowCancelDialog(true)}
+            disabled={isCancelling}
           >
-            Cancel Service
+            {isCancelling ? "Cancelling..." : "Cancel Service"}
           </Button>
         </div>
       </div>
@@ -139,8 +143,9 @@ export const UpcomingServiceCard = ({ booking }: UpcomingServiceCardProps) => {
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={handleCancelBooking}
+              disabled={isCancelling}
             >
-              Yes, cancel service
+              {isCancelling ? "Cancelling..." : "Yes, cancel service"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
