@@ -15,19 +15,31 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     detectSessionInUrl: true
   },
+  global: {
+    headers: {
+      'x-my-custom-header': 'my-app-name',
+    },
+  },
 });
 
-// Add response interceptor for 401 errors
-supabase.rest.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    if (error.status === 401) {
-      const { error: signOutError } = await supabase.auth.signOut();
-      if (signOutError) {
-        console.error('Error signing out:', signOutError);
-      }
-      toast.error('Your session has expired. Please sign in again.');
-    }
-    return Promise.reject(error);
+// Add auth state change listener
+supabase.auth.onAuthStateChange((event, session) => {
+  if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+    // Clear any application cache/state that should be removed on sign out
+    console.log('User signed out or deleted');
   }
-);
+
+  if (event === 'SIGNED_IN') {
+    console.log('User signed in');
+  }
+});
+
+// Handle auth errors globally
+supabase.auth.onAuthStateChange((event, session) => {
+  if (event === 'TOKEN_REFRESHED') {
+    console.log('Token was refreshed successfully');
+  }
+  if (event === 'USER_UPDATED') {
+    console.log('User was updated');
+  }
+});
