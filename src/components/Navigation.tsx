@@ -9,56 +9,88 @@ const cleanupUserData = async (userId: string) => {
   if (!userId) return;
   
   try {
+    console.log('Starting preview cleanup...');
+    
     // First, get all service bookings for the user
-    const { data: bookings } = await supabase
+    const { data: bookings, error: bookingsError } = await supabase
       .from('service_bookings')
       .select('id')
       .eq('user_id', userId);
 
+    if (bookingsError) {
+      console.error('Error fetching bookings:', bookingsError);
+      return;
+    }
+
     if (bookings) {
       // Delete booking_addons first (they reference booking_rooms)
       for (const booking of bookings) {
-        const { data: rooms } = await supabase
+        const { data: rooms, error: roomsError } = await supabase
           .from('booking_rooms')
           .select('id')
           .eq('booking_id', booking.id);
           
+        if (roomsError) {
+          console.error('Error fetching rooms:', roomsError);
+          continue;
+        }
+
         if (rooms) {
           for (const room of rooms) {
-            await supabase
+            const { error: addonsError } = await supabase
               .from('booking_addons')
               .delete()
               .eq('booking_room_id', room.id);
+
+            if (addonsError) {
+              console.error('Error deleting addons:', addonsError);
+            }
           }
         }
       }
 
       // Then delete booking_rooms
       for (const booking of bookings) {
-        await supabase
+        const { error: roomsDeleteError } = await supabase
           .from('booking_rooms')
           .delete()
           .eq('booking_id', booking.id);
+
+        if (roomsDeleteError) {
+          console.error('Error deleting rooms:', roomsDeleteError);
+        }
       }
     }
 
     // Now we can safely delete service_bookings
-    await supabase
+    const { error: bookingsDeleteError } = await supabase
       .from('service_bookings')
       .delete()
       .eq('user_id', userId);
 
+    if (bookingsDeleteError) {
+      console.error('Error deleting bookings:', bookingsDeleteError);
+    }
+
     // Delete service preferences
-    await supabase
+    const { error: preferencesError } = await supabase
       .from('service_preferences')
       .delete()
       .eq('user_id', userId);
 
+    if (preferencesError) {
+      console.error('Error deleting preferences:', preferencesError);
+    }
+
     // Delete properties
-    await supabase
+    const { error: propertiesError } = await supabase
       .from('properties')
       .delete()
       .eq('user_id', userId);
+
+    if (propertiesError) {
+      console.error('Error deleting properties:', propertiesError);
+    }
 
     // Sign out the user
     await supabase.auth.signOut();
@@ -90,6 +122,8 @@ const Navigation = () => {
     const handleCleanup = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user?.id) {
+        // Add a small delay to ensure the request completes
+        await new Promise(resolve => setTimeout(resolve, 100));
         await cleanupUserData(session.user.id);
       }
     };
