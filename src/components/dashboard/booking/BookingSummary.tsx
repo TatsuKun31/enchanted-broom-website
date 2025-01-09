@@ -20,10 +20,16 @@ export const BookingSummary = ({
   const [showCalendar, setShowCalendar] = useState(false);
   const { toast } = useToast();
 
-  const handleDateConfirmed = (date: Date) => {
+  const handleDateConfirmed = (date: Date, timeSlot: string) => {
+    const timeSlotMap = {
+      morning: "9:00 AM - 11:00 AM",
+      midday: "12:00 PM - 2:00 PM",
+      afternoon: "3:00 PM - 5:00 PM",
+    };
+    
     toast({
       title: "Booking Confirmed",
-      description: `Your cleaning service has been scheduled for ${date.toLocaleDateString()}`,
+      description: `Your cleaning service has been scheduled for ${date.toLocaleDateString()} at ${timeSlotMap[timeSlot as keyof typeof timeSlotMap]}`,
     });
     setShowCalendar(false);
     onSubmit();
