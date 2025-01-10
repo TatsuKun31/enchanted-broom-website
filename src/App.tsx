@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import RoomDetails from "./pages/RoomDetails";
+import Dashboard from "./pages/Dashboard";
 import React from 'react';
 import { Session } from '@supabase/supabase-js';
 import { useState, useEffect } from 'react';
@@ -52,6 +53,7 @@ const App = () => {
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/room-details" element={<RoomDetails />} />
+                <Route path="/dashboard" element={<Dashboard />} />
               </Routes>
             </BrowserRouter>
           </TooltipProvider>

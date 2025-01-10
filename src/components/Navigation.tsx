@@ -30,7 +30,7 @@ const Navigation = () => {
   };
 
   const handleDashboard = () => {
-    navigate('/room-details');
+    navigate('/dashboard');
   };
 
   const scrollToSection = (sectionId: string) => {
