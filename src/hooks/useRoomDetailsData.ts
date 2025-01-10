@@ -46,7 +46,7 @@ export const useRoomDetailsData = () => {
         .from('profiles')
         .select('*')
         .eq('id', sessionData.user.id)
-        .single();
+        .maybeSingle();
       if (error) throw error;
       return data;
     },
