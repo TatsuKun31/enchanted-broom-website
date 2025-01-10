@@ -52,25 +52,24 @@ const Index = () => {
   ];
 
   return (
-    <div className="min-h-screen">
-      <div className="relative h-screen">
-        <div
-          className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1721322800607-8c38375eef04')] bg-cover bg-center bg-no-repeat"
-          style={{
-            transform: `translateY(${scrollY * 0.5}px)`,
-            height: '100%',
-          }}
-        >
-          <div className="absolute inset-0 bg-purple-dark/60" />
-        </div>
+    <div className="min-h-screen relative overflow-hidden">
+      <div
+        className="fixed inset-0 bg-[url('https://images.unsplash.com/photo-1581578731548-c64695cc6952')] bg-cover bg-center bg-fixed"
+        style={{
+          transform: `translateY(${scrollY * 0.3}px)`,
+          height: '120vh', // Extra height to prevent white space
+        }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-b from-purple-dark/70 to-purple-dark/90" />
+      </div>
+
+      <div className="relative">
         <Navigation />
         <Hero />
-      </div>
-      
-      <div className="relative bg-purple-dark">
-        <section id="services" className="py-20 bg-gradient-to-b from-purple-secondary/5 to-transparent dark:from-purple-dark/20 dark:to-transparent">
+        
+        <section id="services" className="relative py-20">
           <div className="container mx-auto px-4">
-            <h2 className="text-3xl md:text-4xl font-bold text-center text-purple-dark dark:text-purple-secondary mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-center text-white mb-12">
               Our Services
             </h2>
             <div className="grid md:grid-cols-3 gap-8">
