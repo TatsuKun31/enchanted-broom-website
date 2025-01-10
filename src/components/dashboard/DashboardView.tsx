@@ -19,6 +19,7 @@ interface DashboardViewProps {
 
 export const DashboardView = ({ userData }: DashboardViewProps) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   // Check authentication status
   useEffect(() => {
@@ -31,7 +32,7 @@ export const DashboardView = ({ userData }: DashboardViewProps) => {
     checkAuth();
   }, [navigate]);
 
-  // Fetch next service using React Query with staleTime set to 0 to ensure fresh data
+  // Fetch next service using React Query
   const { data: nextService } = useQuery({
     queryKey: ['nextService'],
     queryFn: async () => {
@@ -65,9 +66,44 @@ export const DashboardView = ({ userData }: DashboardViewProps) => {
 
       return undefined;
     },
-    staleTime: 0, // This ensures we always fetch fresh data
-    refetchOnMount: true, // This ensures we refetch when the component mounts
-    refetchOnWindowFocus: true, // This ensures we refetch when the window regains focus
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+  });
+
+  // Fetch user's complete profile data
+  const { data: completeUserData } = useQuery({
+    queryKey: ['completeUserData'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const [profileResponse, propertyResponse, preferencesResponse] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single(),
+        supabase
+          .from('properties')
+          .select('*')
+          .eq('user_id', user.id)
+          .single(),
+        supabase
+          .from('service_preferences')
+          .select('*')
+          .eq('user_id', user.id)
+          .single(),
+      ]);
+
+      return {
+        name: profileResponse.data?.name || '',
+        phone: profileResponse.data?.phone || '',
+        propertyType: propertyResponse.data?.property_type || '',
+        address: propertyResponse.data?.address || '',
+        frequency: preferencesResponse.data?.frequency || '',
+      };
+    },
   });
 
   const handleSignOut = async () => {
@@ -81,10 +117,25 @@ export const DashboardView = ({ userData }: DashboardViewProps) => {
     }
   };
 
+  const handleProfileUpdate = () => {
+    queryClient.invalidateQueries({ queryKey: ['completeUserData'] });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-24">
-        <DashboardHeader userName={userData.name} onSignOut={handleSignOut} />
+        <DashboardHeader 
+          userName={userData.name} 
+          onSignOut={handleSignOut}
+          userData={completeUserData || {
+            name: userData.name,
+            phone: '',
+            propertyType: userData.propertyType,
+            address: '',
+            frequency: userData.frequency,
+          }}
+          onUpdate={handleProfileUpdate}
+        />
         <DashboardStats 
           nextService={nextService}
           frequency={userData.frequency}
