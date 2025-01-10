@@ -10,12 +10,26 @@ export const DevLogin = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [currentNonce, setCurrentNonce] = useState(0);
 
-  // Load the last used nonce from localStorage
+  // Load the current nonce from Supabase
   useEffect(() => {
-    const lastNonce = localStorage.getItem('lastNonce');
-    if (lastNonce) {
-      setCurrentNonce(parseInt(lastNonce));
-    }
+    const fetchNonce = async () => {
+      const { data, error } = await supabase
+        .from('dev_settings')
+        .select('value')
+        .eq('key', 'dev_login_nonce')
+        .single();
+
+      if (error) {
+        console.error('Error fetching nonce:', error);
+        return;
+      }
+
+      if (data) {
+        setCurrentNonce(parseInt(data.value));
+      }
+    };
+
+    fetchNonce();
   }, []);
 
   const generateTestEmail = (nonce: number): string => {
@@ -56,10 +70,19 @@ export const DevLogin = () => {
         throw signInError;
       }
 
-      // Save the successful nonce
-      localStorage.setItem('lastNonce', newNonce.toString());
+      // Update the nonce in Supabase
+      const { error: updateError } = await supabase
+        .from('dev_settings')
+        .update({ value: newNonce.toString() })
+        .eq('key', 'dev_login_nonce');
+
+      if (updateError) {
+        console.error('Error updating nonce:', updateError);
+        toast.error("Failed to update nonce value");
+        return;
+      }
+
       setCurrentNonce(newNonce);
-      
       toast.success(`Logged in as ${testEmail}`);
       navigate("/room-details");
     } catch (error) {
