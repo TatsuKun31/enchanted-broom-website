@@ -54,10 +54,11 @@ const Index = () => {
   return (
     <div className="min-h-screen relative overflow-hidden">
       <div
-        className="fixed inset-0 bg-[url('https://images.unsplash.com/photo-1581578731548-c64695cc6952')] bg-cover bg-center bg-fixed"
+        className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1581578731548-c64695cc6952')] bg-cover bg-center"
         style={{
           transform: `translateY(${scrollY * 0.3}px)`,
-          height: '120vh', // Extra height to prevent white space
+          height: '150vh', // Increased height to ensure coverage
+          top: '-25vh', // Start the image higher up
         }}
       >
         <div className="absolute inset-0 bg-gradient-to-b from-purple-dark/70 to-purple-dark/90" />
