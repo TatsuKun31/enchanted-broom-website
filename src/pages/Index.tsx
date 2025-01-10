@@ -52,42 +52,37 @@ const Index = () => {
   ];
 
   return (
-    <div className="min-h-screen relative">
-      <div
-        className="fixed inset-0 bg-[url('https://images.unsplash.com/photo-1721322800607-8c38375eef04')] bg-cover bg-center bg-no-repeat"
-        style={{
-          transform: `translateY(${scrollY * 0.5}px)`,
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          zIndex: -1,
-          height: '100%',
-          backgroundAttachment: 'fixed',
-          backgroundSize: 'cover',
-        }}
-      >
-        <div className="absolute inset-0 bg-purple-dark/60" />
-      </div>
-
-      <Navigation />
-      <Hero />
-      
-      <section id="services" className="relative py-20 bg-gradient-to-b from-purple-secondary/5 to-transparent dark:from-purple-dark/20 dark:to-transparent">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-bold text-center text-purple-dark dark:text-purple-secondary mb-12">
-            Our Services
-          </h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            {services.map((service, index) => (
-              <ServiceCard key={index} {...service} />
-            ))}
-          </div>
+    <div className="min-h-screen">
+      <div className="relative h-screen">
+        <div
+          className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1721322800607-8c38375eef04')] bg-cover bg-center bg-no-repeat"
+          style={{
+            transform: `translateY(${scrollY * 0.5}px)`,
+            height: '100%',
+          }}
+        >
+          <div className="absolute inset-0 bg-purple-dark/60" />
         </div>
-      </section>
+        <Navigation />
+        <Hero />
+      </div>
+      
+      <div className="relative bg-purple-dark">
+        <section id="services" className="py-20 bg-gradient-to-b from-purple-secondary/5 to-transparent dark:from-purple-dark/20 dark:to-transparent">
+          <div className="container mx-auto px-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-center text-purple-dark dark:text-purple-secondary mb-12">
+              Our Services
+            </h2>
+            <div className="grid md:grid-cols-3 gap-8">
+              {services.map((service, index) => (
+                <ServiceCard key={index} {...service} />
+              ))}
+            </div>
+          </div>
+        </section>
 
-      <WhyChooseUs />
+        <WhyChooseUs />
+      </div>
     </div>
   );
 };
