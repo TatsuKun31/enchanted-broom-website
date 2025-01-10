@@ -1,5 +1,4 @@
 import { BasicInfoStep } from "./BasicInfoStep";
-import { PropertyDetailsStep } from "./PropertyDetailsStep";
 import { ServicePreferencesStep } from "./ServicePreferencesStep";
 import { OnboardingStep, UserData } from "@/hooks/useRoomDetailsData";
 
@@ -16,12 +15,12 @@ export const OnboardingFlow = ({
   setCurrentStep, 
   setUserData 
 }: OnboardingFlowProps) => {
-  const handleBasicInfoNext = (data: { name: string; phone: string }) => {
-    setUserData((prev) => ({ ...prev, ...data }));
-    setCurrentStep("property-details");
-  };
-
-  const handlePropertyDetailsNext = (data: { propertyType: string; address: string }) => {
+  const handleBasicInfoNext = (data: { 
+    name: string; 
+    phone: string;
+    propertyType: string;
+    address: string;
+  }) => {
     setUserData((prev) => ({ ...prev, ...data }));
     setCurrentStep("service-preferences");
   };
@@ -35,18 +34,11 @@ export const OnboardingFlow = ({
     switch (currentStep) {
       case "basic-info":
         return <BasicInfoStep onNext={handleBasicInfoNext} />;
-      case "property-details":
-        return (
-          <PropertyDetailsStep
-            onNext={handlePropertyDetailsNext}
-            onBack={() => setCurrentStep("basic-info")}
-          />
-        );
       case "service-preferences":
         return (
           <ServicePreferencesStep
             onNext={handleServicePreferencesNext}
-            onBack={() => setCurrentStep("property-details")}
+            onBack={() => setCurrentStep("basic-info")}
           />
         );
       default:
@@ -61,12 +53,10 @@ export const OnboardingFlow = ({
           <h1 className="text-2xl font-bold text-purple-primary">
             {currentStep === "basic-info"
               ? "Welcome! Let's get started"
-              : currentStep === "property-details"
-              ? "Tell us about your property"
               : "Almost done!"}
           </h1>
           <p className="text-muted-foreground">
-            Step {currentStep === "basic-info" ? "1" : currentStep === "property-details" ? "2" : "3"} of 3
+            Step {currentStep === "basic-info" ? "1" : "2"} of 2
           </p>
         </div>
         {renderStep()}
