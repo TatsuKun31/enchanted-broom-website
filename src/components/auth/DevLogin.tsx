@@ -53,22 +53,14 @@ export const DevLogin = () => {
       });
 
       if (signUpError) {
-        // Parse the error response
-        const errorBody = signUpError.message && JSON.parse(signUpError.message);
-        const errorCode = errorBody?.code || signUpError.message;
-
-        if (errorCode === 'email_provider_disabled') {
+        if (signUpError.message.includes('email_provider_disabled')) {
           toast.error("Email authentication is disabled. Please enable it in Supabase settings.");
           return;
         }
-
-        // Only throw if it's not a "user already exists" error
-        if (errorCode !== 'user_already_exists' && !signUpError.message.includes('already registered')) {
-          throw signUpError;
-        }
+        throw signUpError;
       }
 
-      // Try to sign in with the account
+      // Try to sign in with the new account
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: testEmail,
         password: testPassword
@@ -78,22 +70,19 @@ export const DevLogin = () => {
         throw signInError;
       }
 
-      // Update the nonce in Supabase only if this is a new user
-      if (!signUpError) {
-        const { error: updateError } = await supabase
-          .from('dev_settings')
-          .update({ value: newNonce.toString() })
-          .eq('key', 'dev_login_nonce');
+      // Update the nonce in Supabase
+      const { error: updateError } = await supabase
+        .from('dev_settings')
+        .update({ value: newNonce.toString() })
+        .eq('key', 'dev_login_nonce');
 
-        if (updateError) {
-          console.error('Error updating nonce:', updateError);
-          toast.error("Failed to update nonce value");
-          return;
-        }
-
-        setCurrentNonce(newNonce);
+      if (updateError) {
+        console.error('Error updating nonce:', updateError);
+        toast.error("Failed to update nonce value");
+        return;
       }
 
+      setCurrentNonce(newNonce);
       toast.success(`Logged in as ${testEmail}`);
       navigate("/room-details");
     } catch (error) {
