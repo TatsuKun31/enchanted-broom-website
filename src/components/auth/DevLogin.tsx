@@ -57,10 +57,14 @@ export const DevLogin = () => {
           toast.error("Email authentication is disabled. Please enable it in Supabase settings.");
           return;
         }
-        throw signUpError;
+        
+        // If user already exists, proceed with sign in
+        if (!signUpError.message.includes('already registered')) {
+          throw signUpError;
+        }
       }
 
-      // Try to sign in with the new account
+      // Try to sign in with the account
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: testEmail,
         password: testPassword
