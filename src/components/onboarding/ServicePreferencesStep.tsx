@@ -6,13 +6,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 interface ServicePreferencesStepProps {
-  onNext: (data: { frequency: string; timePreference: string }) => void;
+  onNext: (data: { frequency: string }) => void;
   onBack: () => void;
 }
 
 export const ServicePreferencesStep = ({ onNext, onBack }: ServicePreferencesStepProps) => {
   const [frequency, setFrequency] = useState("");
-  const [timePreference, setTimePreference] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -31,15 +30,14 @@ export const ServicePreferencesStep = ({ onNext, onBack }: ServicePreferencesSte
         .from('service_preferences')
         .insert({
           user_id: user.id,
-          frequency,
-          time_preference: timePreference
+          frequency
         })
         .select()
         .single();
 
       if (error) throw error;
 
-      onNext({ frequency, timePreference });
+      onNext({ frequency });
     } catch (error) {
       toast.error("Failed to save service preferences");
       console.error("Error saving service preferences:", error);
@@ -61,19 +59,6 @@ export const ServicePreferencesStep = ({ onNext, onBack }: ServicePreferencesSte
               <SelectItem value="weekly">Weekly</SelectItem>
               <SelectItem value="biweekly">Bi-weekly</SelectItem>
               <SelectItem value="monthly">Monthly</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-2">
-          <Label>Preferred time of day</Label>
-          <Select required onValueChange={setTimePreference}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select time preference" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="morning">Morning (8AM - 12PM)</SelectItem>
-              <SelectItem value="afternoon">Afternoon (12PM - 4PM)</SelectItem>
-              <SelectItem value="evening">Evening (4PM - 8PM)</SelectItem>
             </SelectContent>
           </Select>
         </div>

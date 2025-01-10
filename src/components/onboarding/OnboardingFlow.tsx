@@ -26,7 +26,7 @@ export const OnboardingFlow = ({
     setCurrentStep("service-preferences");
   };
 
-  const handleServicePreferencesNext = (data: { frequency: string; timePreference: string }) => {
+  const handleServicePreferencesNext = (data: { frequency: string }) => {
     setUserData((prev) => ({ ...prev, ...data }));
     setCurrentStep("completed");
   };

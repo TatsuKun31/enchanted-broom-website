@@ -254,21 +254,18 @@ export type Database = {
           created_at: string
           frequency: string
           id: string
-          time_preference: string
           user_id: string | null
         }
         Insert: {
           created_at?: string
           frequency: string
           id?: string
-          time_preference: string
           user_id?: string | null
         }
         Update: {
           created_at?: string
           frequency?: string
           id?: string
-          time_preference?: string
           user_id?: string | null
         }
         Relationships: [

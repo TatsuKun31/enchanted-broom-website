@@ -12,7 +12,6 @@ export interface UserData {
   propertyType: string;
   address: string;
   frequency: string;
-  timePreference: string;
 }
 
 export const useRoomDetailsData = () => {
@@ -24,7 +23,6 @@ export const useRoomDetailsData = () => {
     propertyType: "",
     address: "",
     frequency: "",
-    timePreference: "",
   });
 
   const { data: sessionData } = useQuery({
@@ -94,7 +92,6 @@ export const useRoomDetailsData = () => {
           propertyType: propertyData.property_type || "",
           address: propertyData.address || "",
           frequency: preferencesData.frequency || "",
-          timePreference: preferencesData.time_preference || "",
         });
         setCurrentStep("completed");
       } else {
