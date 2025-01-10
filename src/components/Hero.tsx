@@ -1,4 +1,8 @@
+import { useNavigate } from "react-router-dom";
+
 const Hero = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="relative min-h-screen flex items-center">
       <div className="container mx-auto px-4">
@@ -10,7 +14,7 @@ const Hero = () => {
             Experience the difference with our premium cleaning services. Let us make your home sparkle!
           </p>
           <button
-            onClick={() => window.location.href = '/auth'}
+            onClick={() => navigate('/auth')}
             className="inline-block bg-purple-primary hover:bg-purple-primary/90 text-white px-8 py-3 rounded-lg transition-all duration-300 hover:scale-105"
           >
             Book Now
