@@ -66,12 +66,12 @@ const Index = () => {
         }`}
         style={{
           backgroundImage: "url('/lovable-uploads/c58aa1b8-3568-45ab-9626-bb48a75b43e6.png')",
-          backgroundPosition: "55% center", // Adjusted more towards center
-          backgroundSize: "110%", // Reduced zoom level
-          backgroundRepeat: "no-repeat", // Added to prevent image repetition
+          backgroundPosition: "55% 35%", // Adjusted to move person down
+          backgroundSize: "110%",
+          backgroundRepeat: "no-repeat",
           transform: `translateY(${scrollY * 0.3}px)`,
           height: '200vh',
-          top: '-50vh', // Changed from -25vh to -50vh to cover more of the top
+          top: '-35vh', // Adjusted from -50vh to -35vh to position the person lower
           willChange: 'transform',
         }}
       >
