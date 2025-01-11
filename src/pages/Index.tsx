@@ -67,7 +67,7 @@ const Index = () => {
         style={{
           backgroundImage: "url('/lovable-uploads/974ff095-0122-4262-8a7c-b919b2beda9f.png')",
           backgroundPosition: "center",
-          backgroundSize: "cover",
+          backgroundSize: "110%", // Changed from "cover" to "110%" for 10% zoom
           transform: `translateY(${scrollY * 0.1}px) translateY(-10%)`,
           height: '120vh',
           willChange: 'transform',
