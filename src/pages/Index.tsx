@@ -18,7 +18,7 @@ const Index = () => {
 
   useEffect(() => {
     const img = new Image();
-    img.src = '/lovable-uploads/c58aa1b8-3568-45ab-9626-bb48a75b43e6.png';
+    img.src = '/lovable-uploads/cb2f75d3-a7a8-42cc-87f4-bb2bec556d40.png';
     img.onload = () => setImageLoaded(true);
   }, []);
 
@@ -65,13 +65,11 @@ const Index = () => {
           imageLoaded ? 'opacity-100' : 'opacity-0'
         }`}
         style={{
-          backgroundImage: "url('/lovable-uploads/c58aa1b8-3568-45ab-9626-bb48a75b43e6.png')",
-          backgroundPosition: "55% 40%", // Adjusted from 45% to 40% to move person up slightly
-          backgroundSize: "110%",
-          backgroundRepeat: "no-repeat",
+          backgroundImage: "url('/lovable-uploads/cb2f75d3-a7a8-42cc-87f4-bb2bec556d40.png')",
+          backgroundPosition: "center",
+          backgroundSize: "cover",
           transform: `translateY(${scrollY * 0.3}px)`,
           height: '200vh',
-          top: '-30vh', // Adjusted from -25vh to -30vh to position the person slightly higher
           willChange: 'transform',
         }}
       >
