@@ -68,8 +68,8 @@ const Index = () => {
           backgroundImage: "url('/lovable-uploads/974ff095-0122-4262-8a7c-b919b2beda9f.png')",
           backgroundPosition: "center",
           backgroundSize: "cover",
-          transform: `translateY(${(scrollY * 0.3) - 10}%) translateY(-10%)`,
-          height: '200vh',
+          transform: `translateY(${scrollY * 0.1}px) translateY(-10%)`,
+          height: '120vh',
           willChange: 'transform',
         }}
       >
