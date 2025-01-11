@@ -66,7 +66,8 @@ const Index = () => {
         }`}
         style={{
           backgroundImage: "url('/lovable-uploads/c58aa1b8-3568-45ab-9626-bb48a75b43e6.png')",
-          backgroundPosition: "65% center", // Adjusted to move the person more towards center
+          backgroundPosition: "55% center", // Adjusted more towards center
+          backgroundSize: "110%", // Reduced zoom level
           transform: `translateY(${scrollY * 0.3}px)`,
           height: '200vh',
           top: '-25vh',
