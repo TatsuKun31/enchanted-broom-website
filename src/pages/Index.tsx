@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 
 const Index = () => {
   const [scrollY, setScrollY] = useState(0);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -13,6 +14,12 @@ const Index = () => {
     };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const img = new Image();
+    img.src = '/lovable-uploads/4b6f4eb9-a738-4eb2-b5c4-b553634e8664.png';
+    img.onload = () => setImageLoaded(true);
   }, []);
 
   const services = [
@@ -54,11 +61,15 @@ const Index = () => {
   return (
     <div className="min-h-screen relative overflow-hidden">
       <div
-        className="absolute inset-0 bg-[url('/lovable-uploads/4b6f4eb9-a738-4eb2-b5c4-b553634e8664.png')] bg-cover bg-center"
+        className={`absolute inset-0 bg-cover bg-center transition-opacity duration-500 ${
+          imageLoaded ? 'opacity-100' : 'opacity-0'
+        }`}
         style={{
+          backgroundImage: "url('/lovable-uploads/4b6f4eb9-a738-4eb2-b5c4-b553634e8664.png')",
           transform: `translateY(${scrollY * 0.3}px)`,
           height: '200vh',
           top: '-25vh',
+          willChange: 'transform',
         }}
       >
         <div className="absolute inset-0 bg-gradient-to-b from-purple-dark/70 to-purple-dark/90" />
