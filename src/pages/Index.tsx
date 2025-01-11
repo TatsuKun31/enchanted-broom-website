@@ -71,7 +71,7 @@ const Index = () => {
           backgroundRepeat: "no-repeat", // Added to prevent image repetition
           transform: `translateY(${scrollY * 0.3}px)`,
           height: '200vh',
-          top: '-25vh',
+          top: '-50vh', // Changed from -25vh to -50vh to cover more of the top
           willChange: 'transform',
         }}
       >
