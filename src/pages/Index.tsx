@@ -18,7 +18,7 @@ const Index = () => {
 
   useEffect(() => {
     const img = new Image();
-    img.src = '/lovable-uploads/4b6f4eb9-a738-4eb2-b5c4-b553634e8664.png';
+    img.src = '/lovable-uploads/c58aa1b8-3568-45ab-9626-bb48a75b43e6.png';
     img.onload = () => setImageLoaded(true);
   }, []);
 
@@ -65,7 +65,7 @@ const Index = () => {
           imageLoaded ? 'opacity-100' : 'opacity-0'
         }`}
         style={{
-          backgroundImage: "url('/lovable-uploads/4b6f4eb9-a738-4eb2-b5c4-b553634e8664.png')",
+          backgroundImage: "url('/lovable-uploads/c58aa1b8-3568-45ab-9626-bb48a75b43e6.png')",
           transform: `translateY(${scrollY * 0.3}px)`,
           height: '200vh',
           top: '-25vh',
