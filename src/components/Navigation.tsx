@@ -49,8 +49,8 @@ const Navigation = () => {
   if (isLoading) {
     return (
       <nav className="fixed w-full bg-white/90 dark:bg-purple-dark/90 backdrop-blur-sm z-50 shadow-sm">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center h-16">
+        <div className="max-w-[1400px] mx-auto">
+          <div className="flex justify-between items-center h-16 px-4">
             <div className="text-2xl font-bold text-purple-primary">
               The Enchanted Broom
             </div>
@@ -63,8 +63,8 @@ const Navigation = () => {
 
   return (
     <nav className="fixed w-full bg-white/90 dark:bg-purple-dark/90 backdrop-blur-sm z-50 shadow-sm">
-      <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center h-16">
+      <div className="max-w-[1400px] mx-auto">
+        <div className="flex justify-between items-center h-16 px-4">
           <div 
             className="text-2xl font-bold text-purple-primary cursor-pointer" 
             onClick={() => navigate('/')}
