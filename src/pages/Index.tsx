@@ -3,10 +3,12 @@ import Hero from "@/components/Hero";
 import ServiceCard from "@/components/ServiceCard";
 import WhyChooseUs from "@/components/WhyChooseUs";
 import { useEffect, useState } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Index = () => {
   const [scrollY, setScrollY] = useState(0);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -66,11 +68,11 @@ const Index = () => {
         }`}
         style={{
           backgroundImage: "url('/lovable-uploads/974ff095-0122-4262-8a7c-b919b2beda9f.png')",
-          backgroundPosition: "center 30%", // Adjusted to show more of the person
+          backgroundPosition: isMobile ? "center 20%" : "center 30%",
           backgroundSize: "cover",
           backgroundRepeat: "no-repeat",
-          transform: `translateY(${scrollY * 0.1}px) translateY(-10%)`,
-          height: '120vh',
+          transform: isMobile ? 'none' : `translateY(${scrollY * 0.1}px) translateY(-10%)`,
+          height: isMobile ? '100vh' : '120vh',
           willChange: 'transform',
         }}
       >
