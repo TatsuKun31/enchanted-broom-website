@@ -8,12 +8,14 @@ import { AuthButton } from "./auth/AuthButton";
 import { MobileMenu } from "./navigation/MobileMenu";
 import { NavigationLinks } from "./navigation/NavigationLinks";
 import { useAuthState } from "@/hooks/useAuthState";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated, isLoading } = useAuthState();
+  const isMobile = useIsMobile();
 
   const handleAuth = async () => {
     if (isAuthenticated) {
@@ -51,7 +53,7 @@ const Navigation = () => {
       <nav className="fixed w-full bg-white/90 dark:bg-purple-dark/90 backdrop-blur-sm z-50 shadow-sm">
         <div className="max-w-[1400px] mx-auto">
           <div className="flex justify-between items-center h-16 px-4">
-            <div className="text-2xl font-bold text-purple-primary">
+            <div className={`font-bold text-purple-primary ${isMobile ? 'text-xl' : 'text-2xl'}`}>
               The Enchanted Broom
             </div>
             <ThemeToggle />
@@ -66,25 +68,29 @@ const Navigation = () => {
       <div className="max-w-[1400px] mx-auto">
         <div className="flex justify-between items-center h-16 px-4">
           <div 
-            className="text-2xl font-bold text-purple-primary cursor-pointer" 
+            className={`font-bold text-purple-primary cursor-pointer ${isMobile ? 'text-xl' : 'text-2xl'}`}
             onClick={() => navigate('/')}
           >
             The Enchanted Broom
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
             <NavigationLinks 
               isAuthenticated={isAuthenticated}
               onNavigate={scrollToSection}
               onDashboard={handleDashboard}
             />
 
-            <AuthButton 
-              isAuthenticated={isAuthenticated}
-              onClick={handleAuth}
-            />
+            <div className={isMobile ? 'scale-90' : ''}>
+              <AuthButton 
+                isAuthenticated={isAuthenticated}
+                onClick={handleAuth}
+              />
+            </div>
             
-            <ThemeToggle />
+            <div className={isMobile ? 'scale-90' : ''}>
+              <ThemeToggle />
+            </div>
             
             <button
               onClick={() => setIsOpen(!isOpen)}
