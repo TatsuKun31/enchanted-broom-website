@@ -68,7 +68,7 @@ const Index = () => {
         }`}
         style={{
           backgroundImage: "url('/lovable-uploads/974ff095-0122-4262-8a7c-b919b2beda9f.png')",
-          backgroundPosition: isMobile ? "center 20%" : "center 30%",
+          backgroundPosition: isMobile ? "15% 20%" : "center 30%",
           backgroundSize: "cover",
           backgroundRepeat: "no-repeat",
           transform: isMobile ? 'none' : `translateY(${scrollY * 0.1}px) translateY(-10%)`,
