@@ -29,16 +29,28 @@ export const useAuthRedirect = () => {
         }
 
         if (mounted && session) {
-          // Check if user is an admin
-          const { data: adminProfile } = await supabase
-            .from('admin_profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
+          try {
+            // Check if user is an admin
+            const { data: adminProfile, error: adminError } = await supabase
+              .from('admin_profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .maybeSingle();
 
-          if (adminProfile?.is_active) {
-            navigate("/admin/dashboard");
-          } else {
+            if (adminError) {
+              console.error('Admin profile check error:', adminError);
+              toast.error("Error checking admin status. Redirecting to default route.");
+              navigate("/room-details");
+              return;
+            }
+
+            if (adminProfile?.is_active) {
+              navigate("/admin/dashboard");
+            } else {
+              navigate("/room-details");
+            }
+          } catch (error) {
+            console.error('Admin check error:', error);
             navigate("/room-details");
           }
         }
