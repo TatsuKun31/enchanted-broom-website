@@ -53,9 +53,24 @@ export const useAuthRedirect = () => {
             return;
           }
 
+          // If no admin profile exists, create one
           if (!adminProfile) {
+            const { error: insertError } = await supabase
+              .from('admin_profiles')
+              .insert([{ id: session.user.id, is_active: false }]);
+
+            if (insertError) {
+              console.error('Admin profile creation error:', insertError);
+              if (mounted) {
+                toast.error("Error creating admin profile");
+                await supabase.auth.signOut();
+                navigate("/admin/auth");
+              }
+              return;
+            }
+
             if (mounted) {
-              toast.error("No admin profile found");
+              toast.error("Your admin account is pending activation");
               await supabase.auth.signOut();
               navigate("/admin/auth");
             }

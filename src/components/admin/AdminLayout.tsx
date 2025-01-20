@@ -17,6 +17,7 @@ export const AdminLayout = () => {
           return;
         }
 
+        // First check if user exists in auth.users
         const { data: adminProfile, error } = await supabase
           .from('admin_profiles')
           .select('is_active')
@@ -31,8 +32,21 @@ export const AdminLayout = () => {
           return;
         }
 
+        // If no admin profile exists, create one
         if (!adminProfile) {
-          toast.error("No admin profile found");
+          const { error: insertError } = await supabase
+            .from('admin_profiles')
+            .insert([{ id: session.user.id, is_active: false }]);
+
+          if (insertError) {
+            console.error('Admin profile creation error:', insertError);
+            toast.error("Error creating admin profile");
+            await supabase.auth.signOut();
+            navigate('/admin/auth');
+            return;
+          }
+
+          toast.error("Your admin account is pending activation");
           await supabase.auth.signOut();
           navigate('/admin/auth');
           return;
