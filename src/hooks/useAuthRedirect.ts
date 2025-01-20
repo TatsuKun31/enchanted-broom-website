@@ -55,10 +55,19 @@ export const useAuthRedirect = () => {
               .eq('id', session.user.id)
               .single();
 
-            if (adminError || !adminProfile?.is_active) {
+            if (adminError) {
               console.error('Admin profile check error:', adminError);
               toast.error("Access denied. Admin privileges required.");
-              navigate("/auth");
+              await supabase.auth.signOut();
+              navigate("/admin/auth");
+              setIsLoading(false);
+              return;
+            }
+
+            if (!adminProfile?.is_active) {
+              toast.error("Access denied. Admin privileges required.");
+              await supabase.auth.signOut();
+              navigate("/admin/auth");
               setIsLoading(false);
               return;
             }
