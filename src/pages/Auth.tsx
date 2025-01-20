@@ -5,7 +5,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Auth as SupabaseAuth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { DevLogin } from "@/components/auth/DevLogin";
-import { DevAdminLogin } from "@/components/auth/DevAdminLogin";
 import { Button } from "@/components/ui/button";
 import { Shield } from "lucide-react";
 
@@ -74,10 +73,6 @@ export default function Auth() {
     return <LoadingScreen />;
   }
 
-  const handleAdminSignIn = () => {
-    navigate("/admin/auth");
-  };
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="w-full max-w-md space-y-8 px-4">
@@ -123,26 +118,13 @@ export default function Auth() {
 
             <Button
               variant="outline"
-              onClick={handleAdminSignIn}
-              className="w-full flex items-center gap-2"
+              onClick={() => navigate('/admin/auth')}
+              className="w-full"
               type="button"
             >
-              <Shield className="w-4 h-4" />
-              <span>Admin Sign In</span>
+              <Shield className="w-4 h-4 mr-2" />
+              Admin Portal
             </Button>
-
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
-                  Development Only
-                </span>
-              </div>
-            </div>
-
-            <DevAdminLogin />
           </div>
         </div>
       </div>
