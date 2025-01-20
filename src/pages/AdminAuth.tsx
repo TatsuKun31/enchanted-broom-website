@@ -1,90 +1,60 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Auth as SupabaseAuth } from "@supabase/auth-ui-react";
+import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
+import { DevAdminLogin } from "@/components/auth/DevAdminLogin";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { toast } from "sonner";
-
-const formSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-});
 
 const AdminAuth = () => {
-  const navigate = useNavigate();
+  const { isLoading } = useAuthRedirect();
   const [error, setError] = useState<string | null>(null);
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
-  });
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const checkAdminAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const { data: adminProfile } = await supabase
-          .from('admin_profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-
-        if (adminProfile?.is_active) {
-          navigate('/admin/dashboard');
-        }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_OUT') {
+        setError(null);
       }
+      
+      if (event === 'SIGNED_IN' && !session) {
+        setError('Session invalid. Please try again.');
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
     };
+  }, []);
 
-    checkAdminAuth();
-  }, [navigate]);
-
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    try {
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email: values.email,
-        password: values.password,
-      });
-
-      if (signInError) throw signInError;
-
-      if (data.user) {
-        const { data: adminProfile, error: adminError } = await supabase
-          .from('admin_profiles')
-          .select('*')
-          .eq('id', data.user.id)
-          .single();
-
-        if (adminError || !adminProfile?.is_active) {
-          await supabase.auth.signOut();
-          setError("Unauthorized access. Please contact system administrator.");
-          return;
-        }
-
-        toast.success("Successfully logged in");
-        navigate('/admin/dashboard');
-      }
-    } catch (error: any) {
-      setError(error.message);
-    }
-  };
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-purple-50 to-white dark:from-purple-dark/20 dark:to-purple-dark/40 p-4">
+      <Button
+        variant="ghost"
+        onClick={() => navigate('/auth')}
+        className="absolute top-4 left-4 flex items-center gap-2 text-purple-primary hover:text-purple-primary/80"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Return to Sign In
+      </Button>
+      
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Admin Login</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">Admin Sign In</CardTitle>
           <CardDescription className="text-center">
-            Enter your credentials to access the admin dashboard
+            Sign in to access the admin dashboard
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -93,39 +63,44 @@ const AdminAuth = () => {
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input placeholder="admin@example.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder="••••••" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button type="submit" className="w-full">
-                Sign In
-              </Button>
-            </form>
-          </Form>
+          <div className="space-y-4">
+            <SupabaseAuth 
+              supabaseClient={supabase}
+              appearance={{
+                theme: ThemeSupa,
+                variables: {
+                  default: {
+                    colors: {
+                      brand: '#8B5CF6',
+                      brandAccent: '#7C3AED',
+                      inputBackground: 'white',
+                      inputText: 'black',
+                      inputBorder: '#E5E7EB',
+                      inputBorderFocus: '#8B5CF6',
+                      inputBorderHover: '#8B5CF6',
+                      inputPlaceholder: '#9CA3AF',
+                    }
+                  }
+                },
+                style: {
+                  input: {
+                    backgroundColor: 'var(--background)',
+                    color: 'var(--foreground)',
+                    borderColor: 'var(--border)',
+                  },
+                  anchor: {
+                    color: 'var(--primary)',
+                    textDecoration: 'none',
+                  },
+                  button: {
+                    backgroundColor: 'var(--primary)',
+                    color: 'var(--primary-foreground)',
+                  },
+                },
+              }}
+            />
+            <DevAdminLogin />
+          </div>
         </CardContent>
       </Card>
     </div>
