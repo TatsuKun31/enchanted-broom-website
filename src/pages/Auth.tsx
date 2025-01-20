@@ -5,8 +5,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Auth as SupabaseAuth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { DevLogin } from "@/components/auth/DevLogin";
-import { Button } from "@/components/ui/button";
-import { Shield } from "lucide-react";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -104,27 +102,6 @@ export default function Auth() {
           
           <div className="space-y-4">
             <DevLogin />
-            
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
-                  Admin Access
-                </span>
-              </div>
-            </div>
-
-            <Button
-              variant="outline"
-              onClick={() => navigate('/admin/auth')}
-              className="w-full"
-              type="button"
-            >
-              <Shield className="w-4 h-4 mr-2" />
-              Admin Portal
-            </Button>
           </div>
         </div>
       </div>

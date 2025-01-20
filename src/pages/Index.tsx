@@ -4,8 +4,12 @@ import ServiceCard from "@/components/ServiceCard";
 import WhyChooseUs from "@/components/WhyChooseUs";
 import { useEffect, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Button } from "@/components/ui/button";
+import { Shield } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
+  const navigate = useNavigate();
   const [scrollY, setScrollY] = useState(0);
   const [imageLoaded, setImageLoaded] = useState(false);
   const isMobile = useIsMobile();
@@ -97,6 +101,18 @@ const Index = () => {
         </section>
 
         <WhyChooseUs />
+
+        <div className="container mx-auto px-4 py-12 text-center">
+          <Button
+            variant="outline"
+            onClick={() => navigate('/admin/auth')}
+            className="w-full max-w-md mx-auto"
+            type="button"
+          >
+            <Shield className="w-4 h-4 mr-2" />
+            Admin Portal
+          </Button>
+        </div>
       </div>
     </div>
   );
