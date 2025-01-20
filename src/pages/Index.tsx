@@ -105,7 +105,10 @@ const Index = () => {
         <div className="container mx-auto px-4 py-12 text-center">
           <Button
             variant="outline"
-            onClick={() => navigate('/admin/auth')}
+            onClick={(e) => {
+              e.preventDefault();
+              navigate('/admin/auth');
+            }}
             className="w-full max-w-md mx-auto"
             type="button"
           >
