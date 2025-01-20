@@ -9,21 +9,25 @@ const AdminDashboard = () => {
   const { data: stats, isLoading: isStatsLoading } = useQuery({
     queryKey: ['adminStats'],
     queryFn: async () => {
-      const { data: { count: usersCount } } = await supabase
+      // Get total users count
+      const { count: usersCount } = await supabase
         .from('profiles')
         .select('*', { count: 'exact', head: true });
 
-      const { data: { count: bookingsCount } } = await supabase
+      // Get total bookings count
+      const { count: bookingsCount } = await supabase
         .from('service_bookings')
         .select('*', { count: 'exact', head: true });
 
+      // Get total revenue
       const { data: bookings } = await supabase
         .from('service_bookings')
         .select('total_price');
 
       const totalRevenue = bookings?.reduce((sum, booking) => sum + Number(booking.total_price), 0) || 0;
 
-      const { data: { count: completedCount } } = await supabase
+      // Get completed bookings count
+      const { count: completedCount } = await supabase
         .from('service_bookings')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'completed');
