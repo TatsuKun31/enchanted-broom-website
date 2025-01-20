@@ -30,20 +30,21 @@ export const useAuthRedirect = () => {
 
         if (mounted && session) {
           try {
-            // Check if user is an admin
+            // First check if user exists in admin_profiles without any filters
             const { data: adminProfile, error: adminError } = await supabase
               .from('admin_profiles')
-              .select('*')
+              .select('is_active')
               .eq('id', session.user.id)
-              .maybeSingle();
+              .single();
 
             if (adminError) {
+              // If there's an error checking admin status, assume regular user
               console.error('Admin profile check error:', adminError);
-              toast.error("Error checking admin status. Redirecting to default route.");
               navigate("/room-details");
               return;
             }
 
+            // Only redirect to admin dashboard if profile exists and is active
             if (adminProfile?.is_active) {
               navigate("/admin/dashboard");
             } else {
@@ -53,6 +54,8 @@ export const useAuthRedirect = () => {
             console.error('Admin check error:', error);
             navigate("/room-details");
           }
+        } else if (mounted && !session) {
+          navigate("/auth");
         }
         
         if (mounted) {
