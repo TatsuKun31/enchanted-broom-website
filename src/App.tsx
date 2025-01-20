@@ -8,6 +8,9 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import RoomDetails from "./pages/RoomDetails";
 import Dashboard from "./pages/Dashboard";
+import AdminAuth from "./pages/AdminAuth";
+import AdminDashboard from "./pages/AdminDashboard";
+import { AdminLayout } from "./components/admin/AdminLayout";
 import React from 'react';
 import { Session } from '@supabase/supabase-js';
 import { useState, useEffect } from 'react';
@@ -54,6 +57,13 @@ const App = () => {
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/room-details" element={<RoomDetails />} />
                 <Route path="/dashboard" element={<Dashboard />} />
+                
+                {/* Admin Routes */}
+                <Route path="/admin/auth" element={<AdminAuth />} />
+                <Route path="/admin" element={<AdminLayout />}>
+                  <Route path="dashboard" element={<AdminDashboard />} />
+                  {/* Other admin routes will be added here */}
+                </Route>
               </Routes>
             </BrowserRouter>
           </TooltipProvider>
