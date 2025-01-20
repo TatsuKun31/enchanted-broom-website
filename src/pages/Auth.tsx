@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { DevLogin } from "@/components/auth/DevLogin";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
@@ -48,6 +48,15 @@ const Auth = () => {
       >
         <ArrowLeft className="h-4 w-4" />
         Return to Home Page
+      </Button>
+
+      <Button
+        variant="outline"
+        onClick={() => navigate('/auth/admin')}
+        className="absolute top-4 right-4 flex items-center gap-2 text-purple-primary hover:text-purple-primary/80"
+      >
+        <Shield className="h-4 w-4" />
+        Admin Sign In
       </Button>
       
       <Card className="w-full max-w-md">

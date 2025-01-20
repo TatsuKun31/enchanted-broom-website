@@ -55,11 +55,11 @@ const App = () => {
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/auth/admin" element={<AdminAuth />} />
                 <Route path="/room-details" element={<RoomDetails />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 
                 {/* Admin Routes */}
-                <Route path="/admin/auth" element={<AdminAuth />} />
                 <Route path="/admin" element={<AdminLayout />}>
                   <Route path="dashboard" element={<AdminDashboard />} />
                   {/* Other admin routes will be added here */}
