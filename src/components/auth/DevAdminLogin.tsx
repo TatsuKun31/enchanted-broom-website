@@ -17,29 +17,45 @@ export const DevAdminLogin = () => {
         .from("dev_settings")
         .select("value")
         .eq("key", "admin_login_nonce")
-        .single();
+        .maybeSingle();
 
-      if (devSettingsError || !devSettings) {
+      if (devSettingsError) {
         throw new Error("Failed to get dev settings");
       }
 
-      const email = `AdminTest+${devSettings.value}@testmail.com`;
+      // If no nonce exists, create one
+      if (!devSettings) {
+        const newNonce = Math.floor(Math.random() * 1000000);
+        const { error: insertError } = await supabase
+          .from("dev_settings")
+          .insert({ key: "admin_login_nonce", value: newNonce.toString() });
 
-      const { error: signInError } = await supabase.auth.signInWithOtp({
-        email,
-      });
+        if (insertError) throw new Error("Failed to create nonce");
+        
+        const email = `AdminTest+${newNonce}@testmail.com`;
+        const { error: signInError } = await supabase.auth.signInWithOtp({
+          email,
+        });
 
-      if (signInError) throw signInError;
+        if (signInError) throw signInError;
+      } else {
+        const email = `AdminTest+${devSettings.value}@testmail.com`;
+        const { error: signInError } = await supabase.auth.signInWithOtp({
+          email,
+        });
 
-      // Update the nonce
-      const newNonce = Math.floor(Math.random() * 1000000);
-      const { error: updateError } = await supabase
-        .from("dev_settings")
-        .update({ value: newNonce.toString() })
-        .eq("key", "admin_login_nonce");
+        if (signInError) throw signInError;
 
-      if (updateError) {
-        console.error("Failed to update nonce:", updateError);
+        // Update the nonce
+        const newNonce = Math.floor(Math.random() * 1000000);
+        const { error: updateError } = await supabase
+          .from("dev_settings")
+          .update({ value: newNonce.toString() })
+          .eq("key", "admin_login_nonce");
+
+        if (updateError) {
+          console.error("Failed to update nonce:", updateError);
+        }
       }
 
       toast.success("Check your email for the login link");
