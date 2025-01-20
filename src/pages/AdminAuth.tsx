@@ -21,8 +21,23 @@ const AdminAuth = () => {
         setError(null);
       }
       
-      if (event === 'SIGNED_IN' && !session) {
-        setError('Session invalid. Please try again.');
+      if (event === 'SIGNED_IN' && session) {
+        try {
+          const { data: adminProfile, error: adminError } = await supabase
+            .from('admin_profiles')
+            .select('is_active')
+            .eq('id', session.user.id)
+            .single();
+
+          if (adminError || !adminProfile?.is_active) {
+            setError('Unauthorized: Admin access required');
+            await supabase.auth.signOut();
+          }
+        } catch (error) {
+          console.error('Admin verification error:', error);
+          setError('Error verifying admin status');
+          await supabase.auth.signOut();
+        }
       }
     });
 
