@@ -7,76 +7,22 @@ import { Shield } from "lucide-react";
 
 export const DevAdminLogin = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [lastRequestTime, setLastRequestTime] = useState(0);
   const navigate = useNavigate();
 
   const handleDevLogin = async () => {
-    // Check if enough time has passed since the last request (42 seconds)
-    const now = Date.now();
-    const timeSinceLastRequest = now - lastRequestTime;
-    const requiredWaitTime = 42 * 1000; // 42 seconds in milliseconds
-
-    if (timeSinceLastRequest < requiredWaitTime && lastRequestTime !== 0) {
-      const remainingSeconds = Math.ceil((requiredWaitTime - timeSinceLastRequest) / 1000);
-      toast.error(`Please wait ${remainingSeconds} seconds before attempting another login`);
-      return;
-    }
-
     setIsLoading(true);
     try {
-      // Get the nonce from dev_settings
-      const { data: devSettings, error: devSettingsError } = await supabase
-        .from("dev_settings")
-        .select("value")
-        .eq("key", "admin_login_nonce")
-        .maybeSingle();
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: 'admin@test.com',
+        password: 'admintest123',
+      });
 
-      if (devSettingsError) {
-        throw new Error("Failed to get dev settings");
-      }
+      if (signInError) throw signInError;
 
-      // If no nonce exists, create one
-      if (!devSettings) {
-        const newNonce = Math.floor(Math.random() * 1000000);
-        const { error: insertError } = await supabase
-          .from("dev_settings")
-          .insert({ key: "admin_login_nonce", value: newNonce.toString() });
-
-        if (insertError) throw new Error("Failed to create nonce");
-        
-        const email = `AdminTest+${newNonce}@testmail.com`;
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password: `DevPass${newNonce}`,
-        });
-
-        if (signInError) throw signInError;
-      } else {
-        const email = `AdminTest+${devSettings.value}@testmail.com`;
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password: `DevPass${devSettings.value}`,
-        });
-
-        if (signInError) throw signInError;
-
-        // Update the nonce
-        const newNonce = Math.floor(Math.random() * 1000000);
-        const { error: updateError } = await supabase
-          .from("dev_settings")
-          .update({ value: newNonce.toString() })
-          .eq("key", "admin_login_nonce");
-
-        if (updateError) {
-          console.error("Failed to update nonce:", updateError);
-        }
-      }
-
-      setLastRequestTime(now);
       toast.success("Successfully logged in as admin");
       navigate("/admin/dashboard");
     } catch (error: any) {
-      console.error("Dev login error:", error);
+      console.error("Dev admin login error:", error);
       toast.error("Failed to login. Please try again.");
     } finally {
       setIsLoading(false);
