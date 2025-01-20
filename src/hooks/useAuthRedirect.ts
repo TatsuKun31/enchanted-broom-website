@@ -41,7 +41,7 @@ export const useAuthRedirect = () => {
             .from('admin_profiles')
             .select('is_active')
             .eq('id', session.user.id)
-            .single();
+            .maybeSingle();
 
           if (adminError) {
             console.error('Admin check error:', adminError);
@@ -53,9 +53,18 @@ export const useAuthRedirect = () => {
             return;
           }
 
-          if (!adminProfile?.is_active) {
+          if (!adminProfile) {
             if (mounted) {
-              toast.error("Unauthorized: Admin access required");
+              toast.error("No admin profile found");
+              await supabase.auth.signOut();
+              navigate("/admin/auth");
+            }
+            return;
+          }
+
+          if (!adminProfile.is_active) {
+            if (mounted) {
+              toast.error("Your admin account is not active");
               await supabase.auth.signOut();
               navigate("/admin/auth");
             }

@@ -21,7 +21,7 @@ export const AdminLayout = () => {
           .from('admin_profiles')
           .select('is_active')
           .eq('id', session.user.id)
-          .single();
+          .maybeSingle();
 
         if (error) {
           console.error('Admin profile check error:', error);
@@ -31,8 +31,15 @@ export const AdminLayout = () => {
           return;
         }
 
-        if (!adminProfile?.is_active) {
-          toast.error("Unauthorized: Admin access required");
+        if (!adminProfile) {
+          toast.error("No admin profile found");
+          await supabase.auth.signOut();
+          navigate('/admin/auth');
+          return;
+        }
+
+        if (!adminProfile.is_active) {
+          toast.error("Your admin account is not active");
           await supabase.auth.signOut();
           navigate('/admin/auth');
           return;
