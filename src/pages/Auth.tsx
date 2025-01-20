@@ -74,8 +74,7 @@ export default function Auth() {
     return <LoadingScreen />;
   }
 
-  const handleAdminSignIn = (e: React.MouseEvent) => {
-    e.preventDefault();
+  const handleAdminSignIn = () => {
     navigate("/admin/auth");
   };
 
@@ -126,6 +125,7 @@ export default function Auth() {
               variant="outline"
               onClick={handleAdminSignIn}
               className="w-full flex items-center gap-2"
+              type="button"
             >
               <Shield className="w-4 h-4" />
               <span>Admin Sign In</span>
