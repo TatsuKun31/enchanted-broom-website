@@ -18,7 +18,7 @@ export const DevAdminLogin = () => {
 
     if (timeSinceLastRequest < requiredWaitTime && lastRequestTime !== 0) {
       const remainingSeconds = Math.ceil((requiredWaitTime - timeSinceLastRequest) / 1000);
-      toast.error(`Please wait ${remainingSeconds} seconds before requesting another login link`);
+      toast.error(`Please wait ${remainingSeconds} seconds before attempting another login`);
       return;
     }
 
@@ -45,15 +45,17 @@ export const DevAdminLogin = () => {
         if (insertError) throw new Error("Failed to create nonce");
         
         const email = `AdminTest+${newNonce}@testmail.com`;
-        const { error: signInError } = await supabase.auth.signInWithOtp({
+        const { error: signInError } = await supabase.auth.signInWithPassword({
           email,
+          password: `DevPass${newNonce}`,
         });
 
         if (signInError) throw signInError;
       } else {
         const email = `AdminTest+${devSettings.value}@testmail.com`;
-        const { error: signInError } = await supabase.auth.signInWithOtp({
+        const { error: signInError } = await supabase.auth.signInWithPassword({
           email,
+          password: `DevPass${devSettings.value}`,
         });
 
         if (signInError) throw signInError;
@@ -71,15 +73,11 @@ export const DevAdminLogin = () => {
       }
 
       setLastRequestTime(now);
-      toast.success("Check your email for the login link");
-      navigate("/auth/admin");
+      toast.success("Successfully logged in as admin");
+      navigate("/admin/dashboard");
     } catch (error: any) {
       console.error("Dev login error:", error);
-      if (error.code === "over_email_send_rate_limit") {
-        toast.error("Please wait before requesting another login link");
-      } else {
-        toast.error("Failed to send login link");
-      }
+      toast.error("Failed to login. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -93,7 +91,7 @@ export const DevAdminLogin = () => {
       className="w-full flex items-center gap-2"
     >
       <Shield className="w-4 h-4" />
-      <span>{isLoading ? "Sending Link..." : "Dev Admin Login"}</span>
+      <span>{isLoading ? "Logging in..." : "Dev Admin Login"}</span>
     </Button>
   );
 };
