@@ -20,7 +20,7 @@ export const useAuthRedirect = () => {
           console.error('Auth check error:', error);
           if (retryCount < maxRetries) {
             retryCount++;
-            setTimeout(checkUser, 1000 * retryCount); // Exponential backoff
+            setTimeout(checkUser, 1000 * retryCount);
             return;
           }
           toast.error("Authentication error. Please try again.");
@@ -28,10 +28,22 @@ export const useAuthRedirect = () => {
           return;
         }
 
-        if (mounted) {
-          if (session) {
+        if (mounted && session) {
+          // Check if user is an admin
+          const { data: adminProfile } = await supabase
+            .from('admin_profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+
+          if (adminProfile?.is_active) {
+            navigate("/admin/dashboard");
+          } else {
             navigate("/room-details");
           }
+        }
+        
+        if (mounted) {
           setIsLoading(false);
         }
       } catch (error) {
@@ -46,7 +58,7 @@ export const useAuthRedirect = () => {
       if (!mounted) return;
 
       if (event === "SIGNED_IN" && session) {
-        navigate("/room-details");
+        checkUser();
       }
     });
 
