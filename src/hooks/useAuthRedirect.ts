@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -8,86 +8,78 @@ export const useAuthRedirect = () => {
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(true);
   const isAdminRoute = location.pathname.startsWith('/admin');
+  const checkInProgress = useRef(false);
 
   useEffect(() => {
     let mounted = true;
-    let retryCount = 0;
-    const maxRetries = 3;
 
     const checkUser = async () => {
+      // Prevent multiple simultaneous checks
+      if (checkInProgress.current) {
+        return;
+      }
+      
+      checkInProgress.current = true;
+
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
-        if (error) {
-          console.error('Auth check error:', error);
-          if (retryCount < maxRetries) {
-            retryCount++;
-            setTimeout(checkUser, 1000 * retryCount);
-            return;
-          }
+        if (sessionError) {
+          console.error('Auth check error:', sessionError);
           toast.error("Authentication error. Please try again.");
-          setIsLoading(false);
+          if (mounted) {
+            setIsLoading(false);
+          }
           return;
         }
 
-        if (!mounted) return;
-
         // If we're on an auth page and there's no session, just stop loading
         if (!session && location.pathname.includes('/auth')) {
-          setIsLoading(false);
+          if (mounted) {
+            setIsLoading(false);
+          }
           return;
         }
 
         // If there's no session and we're not on an auth page, redirect
         if (!session) {
           navigate(isAdminRoute ? "/admin/auth" : "/auth");
-          setIsLoading(false);
+          if (mounted) {
+            setIsLoading(false);
+          }
           return;
         }
 
-        // If we have a session, handle the routing
-        try {
-          // Check for admin status if on admin route
-          if (isAdminRoute) {
-            const { data: adminProfile, error: adminError } = await supabase
-              .from('admin_profiles')
-              .select('is_active')
-              .eq('id', session.user.id)
-              .single();
+        // Handle admin routes with a single efficient query
+        if (isAdminRoute) {
+          const { data: adminProfile, error: adminError } = await supabase
+            .from('admin_profiles')
+            .select('is_active')
+            .eq('id', session.user.id)
+            .maybeSingle();
 
-            if (adminError) {
-              console.error('Admin profile check error:', adminError);
-              toast.error("Access denied. Admin privileges required.");
-              await supabase.auth.signOut();
-              navigate("/admin/auth");
+          if (adminError || !adminProfile?.is_active) {
+            console.error('Admin access denied:', adminError || 'Inactive admin');
+            toast.error("Access denied. Admin privileges required.");
+            await supabase.auth.signOut();
+            navigate("/admin/auth");
+            if (mounted) {
               setIsLoading(false);
-              return;
             }
-
-            if (!adminProfile?.is_active) {
-              toast.error("Access denied. Admin privileges required.");
-              await supabase.auth.signOut();
-              navigate("/admin/auth");
-              setIsLoading(false);
-              return;
-            }
-
-            // Only redirect if we're on the admin auth page
-            if (location.pathname === '/admin/auth') {
-              navigate("/admin/dashboard");
-            }
-          } else {
-            // For non-admin routes, only redirect if we're on the auth page
-            if (location.pathname === '/auth') {
-              navigate("/room-details");
-            }
+            return;
           }
-        } catch (error) {
-          console.error('Route check error:', error);
-          toast.error("Error checking permissions. Please try again.");
-          navigate(isAdminRoute ? "/admin/auth" : "/auth");
+
+          // Only redirect if we're on the admin auth page
+          if (location.pathname === '/admin/auth') {
+            navigate("/admin/dashboard");
+          }
+        } else {
+          // For non-admin routes, only redirect if we're on the auth page
+          if (location.pathname === '/auth') {
+            navigate("/room-details");
+          }
         }
-        
+
         if (mounted) {
           setIsLoading(false);
         }
@@ -96,6 +88,8 @@ export const useAuthRedirect = () => {
         if (mounted) {
           setIsLoading(false);
         }
+      } finally {
+        checkInProgress.current = false;
       }
     };
 
