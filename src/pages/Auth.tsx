@@ -1,4 +1,5 @@
-import { useAuthRedirect } from "@/hooks/useAuthRedirect";
+import { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { supabase } from "@/integrations/supabase/client";
 import { Auth as SupabaseAuth } from "@supabase/auth-ui-react";
@@ -7,11 +8,67 @@ import { DevLogin } from "@/components/auth/DevLogin";
 import { DevAdminLogin } from "@/components/auth/DevAdminLogin";
 import { Button } from "@/components/ui/button";
 import { Shield } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
 export default function Auth() {
-  const { isLoading } = useAuthRedirect();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const checkUser = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Auth check error:', error);
+          if (mounted) {
+            setIsLoading(false);
+          }
+          return;
+        }
+
+        if (mounted && session && location.pathname !== "/admin/auth") {
+          try {
+            const { data: adminProfile, error: adminError } = await supabase
+              .from('admin_profiles')
+              .select('is_active')
+              .eq('id', session.user.id)
+              .single();
+
+            if (adminError) {
+              console.error('Admin profile check error:', adminError);
+              navigate("/room-details");
+              return;
+            }
+
+            if (adminProfile?.is_active) {
+              navigate("/admin/dashboard");
+            } else {
+              navigate("/room-details");
+            }
+          } catch (error) {
+            console.error('Admin check error:', error);
+            navigate("/room-details");
+          }
+        } else if (mounted) {
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error('Auth check error:', error);
+        if (mounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    checkUser();
+
+    return () => {
+      mounted = false;
+    };
+  }, [navigate, location.pathname]);
 
   if (isLoading) {
     return <LoadingScreen />;
