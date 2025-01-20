@@ -7,9 +7,21 @@ import { Shield } from "lucide-react";
 
 export const DevAdminLogin = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [lastRequestTime, setLastRequestTime] = useState(0);
   const navigate = useNavigate();
 
   const handleDevLogin = async () => {
+    // Check if enough time has passed since the last request (42 seconds)
+    const now = Date.now();
+    const timeSinceLastRequest = now - lastRequestTime;
+    const requiredWaitTime = 42 * 1000; // 42 seconds in milliseconds
+
+    if (timeSinceLastRequest < requiredWaitTime && lastRequestTime !== 0) {
+      const remainingSeconds = Math.ceil((requiredWaitTime - timeSinceLastRequest) / 1000);
+      toast.error(`Please wait ${remainingSeconds} seconds before requesting another login link`);
+      return;
+    }
+
     setIsLoading(true);
     try {
       // Get the nonce from dev_settings
@@ -58,11 +70,16 @@ export const DevAdminLogin = () => {
         }
       }
 
+      setLastRequestTime(now);
       toast.success("Check your email for the login link");
       navigate("/auth/admin");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Dev login error:", error);
-      toast.error("Failed to send login link");
+      if (error.code === "over_email_send_rate_limit") {
+        toast.error("Please wait before requesting another login link");
+      } else {
+        toast.error("Failed to send login link");
+      }
     } finally {
       setIsLoading(false);
     }
