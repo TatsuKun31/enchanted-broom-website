@@ -32,11 +32,15 @@ export const useAuthRedirect = () => {
 
         if (!mounted) return;
 
+        // If we're on an auth page and there's no session, just stop loading
+        if (!session && location.pathname.includes('/auth')) {
+          setIsLoading(false);
+          return;
+        }
+
+        // If there's no session and we're not on an auth page, redirect
         if (!session) {
-          // Only redirect to /auth if we're not already on an auth page
-          if (!location.pathname.includes('/auth')) {
-            navigate(isAdminRoute ? "/admin/auth" : "/auth");
-          }
+          navigate(isAdminRoute ? "/admin/auth" : "/auth");
           setIsLoading(false);
           return;
         }
@@ -55,20 +59,23 @@ export const useAuthRedirect = () => {
               console.error('Admin profile check error:', adminError);
               toast.error("Access denied. Admin privileges required.");
               navigate("/auth");
+              setIsLoading(false);
               return;
             }
 
+            // Only redirect if we're on the admin auth page
             if (location.pathname === '/admin/auth') {
               navigate("/admin/dashboard");
             }
           } else {
-            // For non-admin routes
+            // For non-admin routes, only redirect if we're on the auth page
             if (location.pathname === '/auth') {
               navigate("/room-details");
             }
           }
         } catch (error) {
           console.error('Route check error:', error);
+          toast.error("Error checking permissions. Please try again.");
           navigate(isAdminRoute ? "/admin/auth" : "/auth");
         }
         
