@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export const useAuthRedirect = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isLoading, setIsLoading] = useState(true);
+  const isAdminRoute = location.pathname.startsWith('/admin');
 
   useEffect(() => {
     let mounted = true;
@@ -28,34 +30,46 @@ export const useAuthRedirect = () => {
           return;
         }
 
-        if (mounted && session) {
-          try {
-            // First check if user exists in admin_profiles without any filters
+        if (!mounted) return;
+
+        if (!session) {
+          // Only redirect to /auth if we're not already on an auth page
+          if (!location.pathname.includes('/auth')) {
+            navigate(isAdminRoute ? "/admin/auth" : "/auth");
+          }
+          setIsLoading(false);
+          return;
+        }
+
+        // If we have a session, handle the routing
+        try {
+          // Check for admin status if on admin route
+          if (isAdminRoute) {
             const { data: adminProfile, error: adminError } = await supabase
               .from('admin_profiles')
               .select('is_active')
               .eq('id', session.user.id)
               .single();
 
-            if (adminError) {
-              // If there's an error checking admin status, assume regular user
+            if (adminError || !adminProfile?.is_active) {
               console.error('Admin profile check error:', adminError);
-              navigate("/room-details");
+              toast.error("Access denied. Admin privileges required.");
+              navigate("/auth");
               return;
             }
 
-            // Only redirect to admin dashboard if profile exists and is active
-            if (adminProfile?.is_active) {
+            if (location.pathname === '/admin/auth') {
               navigate("/admin/dashboard");
-            } else {
+            }
+          } else {
+            // For non-admin routes
+            if (location.pathname === '/auth') {
               navigate("/room-details");
             }
-          } catch (error) {
-            console.error('Admin check error:', error);
-            navigate("/room-details");
           }
-        } else if (mounted && !session) {
-          navigate("/auth");
+        } catch (error) {
+          console.error('Route check error:', error);
+          navigate(isAdminRoute ? "/admin/auth" : "/auth");
         }
         
         if (mounted) {
@@ -83,7 +97,7 @@ export const useAuthRedirect = () => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [navigate, isAdminRoute, location.pathname]);
 
   return { isLoading };
 };
