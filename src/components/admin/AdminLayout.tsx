@@ -3,31 +3,53 @@ import { useNavigate, Outlet } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminSidebar } from "./AdminSidebar";
 import { AdminHeader } from "./AdminHeader";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 export const AdminLayout = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
     const checkAdminAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate('/admin/auth');
-        return;
-      }
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          navigate('/admin/auth');
+          return;
+        }
 
-      const { data: adminProfile } = await supabase
-        .from('admin_profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .single();
+        const { data: adminProfile, error } = await supabase
+          .from('admin_profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
 
-      if (!adminProfile?.is_active) {
-        await supabase.auth.signOut();
+        if (error || !adminProfile?.is_active) {
+          toast.error("Unauthorized access");
+          await supabase.auth.signOut();
+          navigate('/admin/auth');
+          return;
+        }
+      } catch (error) {
+        console.error('Error checking admin auth:', error);
+        toast.error("Authentication error");
         navigate('/admin/auth');
       }
     };
 
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_OUT') {
+        navigate('/admin/auth');
+      } else if (event === 'SIGNED_IN') {
+        checkAdminAuth();
+      }
+    });
+
     checkAdminAuth();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [navigate]);
 
   return (
