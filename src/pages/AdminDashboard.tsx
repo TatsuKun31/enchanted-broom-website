@@ -4,8 +4,13 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { PriceAdjustmentModal } from "@/components/admin/PriceAdjustmentModal";
 
 const AdminDashboard = () => {
+  const [isPriceModalOpen, setIsPriceModalOpen] = useState(false);
+  
   const { data: stats, isLoading: isStatsLoading } = useQuery({
     queryKey: ['adminStats'],
     queryFn: async () => {
@@ -61,6 +66,9 @@ const AdminDashboard = () => {
     <div className="space-y-8 animate-fade-in">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Dashboard Overview</h1>
+        <Button onClick={() => setIsPriceModalOpen(true)}>
+          Adjust Service Prices
+        </Button>
       </div>
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -147,6 +155,11 @@ const AdminDashboard = () => {
           )}
         </CardContent>
       </Card>
+
+      <PriceAdjustmentModal 
+        isOpen={isPriceModalOpen}
+        onClose={() => setIsPriceModalOpen(false)}
+      />
     </div>
   );
 };

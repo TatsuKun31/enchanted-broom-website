@@ -167,6 +167,48 @@ export type Database = {
         }
         Relationships: []
       }
+      price_adjustments: {
+        Row: {
+          adjusted_by: string | null
+          created_at: string
+          id: string
+          new_price: number
+          previous_price: number
+          service_option_id: string | null
+        }
+        Insert: {
+          adjusted_by?: string | null
+          created_at?: string
+          id?: string
+          new_price: number
+          previous_price: number
+          service_option_id?: string | null
+        }
+        Update: {
+          adjusted_by?: string | null
+          created_at?: string
+          id?: string
+          new_price?: number
+          previous_price?: number
+          service_option_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_adjustments_adjusted_by_fkey"
+            columns: ["adjusted_by"]
+            isOneToOne: false
+            referencedRelation: "admin_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "price_adjustments_service_option_id_fkey"
+            columns: ["service_option_id"]
+            isOneToOne: false
+            referencedRelation: "service_options"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
