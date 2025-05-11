@@ -9,6 +9,7 @@ import { MobileMenu } from "./navigation/MobileMenu";
 import { NavigationLinks } from "./navigation/NavigationLinks";
 import { useAuthState } from "@/hooks/useAuthState";
 import { useIsMobile } from "@/hooks/use-mobile";
+import logo from "../assets/logo.svg";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -53,8 +54,8 @@ const Navigation = () => {
       <nav className="fixed w-full bg-white/90 dark:bg-purple-dark/90 backdrop-blur-sm z-50 shadow-sm">
         <div className="max-w-[1400px] mx-auto">
           <div className="flex justify-between items-center h-16 px-4">
-            <div className={`font-bold text-purple-primary ${isMobile ? 'text-xl' : 'text-2xl'}`}>
-              The Enchanted Broom
+            <div>
+              <img src={logo} alt="Logo" className="h-10" />
             </div>
             <ThemeToggle />
           </div>
@@ -65,13 +66,9 @@ const Navigation = () => {
 
   return (
     <nav className="fixed w-full bg-white/90 dark:bg-purple-dark/90 backdrop-blur-sm z-50 shadow-sm">
-      <div className="max-w-[1400px] mx-auto">
-        <div className="flex justify-between items-center h-16 px-4">
-          <div 
-            className={`font-bold text-purple-primary cursor-pointer ${isMobile ? 'text-xl' : 'text-2xl'}`}
-            onClick={() => navigate('/')}
-          >
-            The Enchanted Broom
+        <div className="flex justify-between items-center h-20 px-4">
+          <div onClick={() => navigate('/')}>
+          <img src={logo} alt="Logo" className="h-18 w-40 ml-3" />
           </div>
           
           <div className="flex items-center gap-2 md:gap-4">
@@ -108,7 +105,7 @@ const Navigation = () => {
             onDashboard={handleDashboard}
           />
         )}
-      </div>
+      
     </nav>
   );
 };
