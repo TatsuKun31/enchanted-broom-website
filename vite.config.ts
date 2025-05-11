@@ -18,5 +18,8 @@ export default defineConfig(({ mode }) => ({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
-  },
+    allowedHosts: [
+      "a1715de9-b8a8-4bfd-8df4-43c12c7f068c.lovableproject.com"      
+    ]
+  }
 }));
